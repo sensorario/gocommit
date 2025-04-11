@@ -4,7 +4,7 @@ A simple Go CLI tool that stages all changes, commits them with a message, and p
 
 ## 📦 Installation
 
-To build and install `gocommit` globally:
+Build and install `gocommit` globally:
 
 ```bash
 make
