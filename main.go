@@ -31,7 +31,26 @@ func main() {
 	}
 	message = strings.TrimSpace(message)
 
+	reader = bufio.NewReader(os.Stdin)
+	fmt.Print("Enter commit type (feat, fix, wip, ...): ")
+	commitType, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading message: %v\n", err)
+		os.Exit(1)
+	}
+	commitType = strings.TrimSpace(commitType)
+
+	reader = bufio.NewReader(os.Stdin)
+	fmt.Print("Enter commit type (feat, fix, wip, ...): ")
+	feature, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading message: %v\n", err)
+		os.Exit(1)
+	}
+	feature = strings.TrimSpace(feature)
+
 	fmt.Println("Running: git commit -m \"" + message + "\"")
+	message = commitType + "(" + feature + "): " + message
 	if err := runCommand("git", "commit", "-m", message); err != nil {
 		fmt.Fprintf(os.Stderr, "Error during git commit: %v\n", err)
 		os.Exit(1)
