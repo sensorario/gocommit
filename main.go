@@ -43,3 +43,22 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+	parts := strings.SplitN(message, ":", 2)
+	if len(parts) != 2 {
+		return false
+	}
+
+	prefix := strings.TrimSpace(parts[0])
+	if !strings.Contains(prefix, "(") || !strings.Contains(prefix, ")") {
+		return false
+	}
+
+	validTypes := []string{"feat", "fix", "chore", "docs", "style", "refactor", "perf", "test"}
+	typePart := strings.SplitN(prefix, "(", 2)[0]
+	for _, validType := range validTypes {
+		if typePart == validType {
+			return true
+		}
+	}
+	return false
