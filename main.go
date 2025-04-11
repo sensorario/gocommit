@@ -41,7 +41,7 @@ func main() {
 	commitType = strings.TrimSpace(commitType)
 
 	reader = bufio.NewReader(os.Stdin)
-	fmt.Print("Enter commit type (feat, fix, wip, ...): ")
+	fmt.Print("The feature name: ")
 	feature, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading message: %v\n", err)
