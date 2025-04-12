@@ -16,7 +16,7 @@ A simple Go CLI tool that stages all changes, commits them with a message, and p
 Clone the repository and install the tool globally:
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/gocommit.git
+git clone https://github.com/sensorario/gocommit.git
 cd gocommit
 make
 ```
