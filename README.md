@@ -2,6 +2,8 @@
 
 A simple Go CLI tool that stages all changes, commits them with a message, and pushes to your Git repository.
 
+![Prompt Example](prompt.png)
+
 ## 📦 Installation
 
 ### Requirements
@@ -53,7 +55,7 @@ You’ll be prompted to enter a commit message. The tool executes:
 ```bash
 $ gocommit
 Enter commit message: fix: correct typo in README
-[main 123abcd] fix: correct typo in README
+[main b2n3m45n] fix: correct typo in README
  1 file changed, 1 insertion(+), 1 deletion(+)
 To github.com:your-user/your-repo.git
 ```
