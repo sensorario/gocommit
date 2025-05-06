@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
 	"github.com/manifoldco/promptui"
 )
 
@@ -23,16 +24,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter commit message: ")
-	message, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading message: %v\n", err)
-		os.Exit(1)
-	}
-	message = strings.TrimSpace(message)
-
-
 	prompt := promptui.Select{
 		Label: "Commit type",
 		Items: []string{"wip", "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test"},
@@ -43,7 +34,7 @@ func main() {
 		return
 	}
 
-	reader = bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("The feature name: ")
 	feature, err := reader.ReadString('\n')
 	if err != nil {
@@ -51,6 +42,16 @@ func main() {
 		os.Exit(1)
 	}
 	feature = strings.TrimSpace(feature)
+
+	reader = bufio.NewReader(os.Stdin)
+	fmt.Print("Enter commit message: ")
+	message, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading message: %v\n", err)
+		os.Exit(1)
+	}
+	message = strings.TrimSpace(message)
+
 
 	fmt.Println("Running: git commit -m \"" + message + "\"")
 	message = commitType + "(" + feature + "): " + message
