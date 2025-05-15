@@ -17,6 +17,19 @@ func runCommand(name string, args ...string) error {
 	return cmd.Run()
 }
 
+func gitRemoteExists() (bool, error) {
+	cmd := exec.Command("git", "remote")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(string(output)) != "", nil
+}
+
+func printRed(msg string) {
+	fmt.Printf("\033[31m%s\033[0m\n", msg) // ANSI escape code for red
+}
+
 func main() {
 	fmt.Println("Running: git add .")
 	if err := runCommand("git", "add", "."); err != nil {
@@ -28,7 +41,7 @@ func main() {
 		Label: "Commit type",
 		Items: []string{"wip", "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test"},
 	}
-		_, commitType, err := prompt.Run()
+	_, commitType, err := prompt.Run()
 	if err != nil {
 		fmt.Printf("Prompt failed: %v\n", err)
 		return
@@ -43,7 +56,6 @@ func main() {
 	}
 	feature = strings.TrimSpace(feature)
 
-	reader = bufio.NewReader(os.Stdin)
 	fmt.Print("Enter commit message: ")
 	message, err := reader.ReadString('\n')
 	if err != nil {
@@ -52,11 +64,21 @@ func main() {
 	}
 	message = strings.TrimSpace(message)
 
-
-	fmt.Println("Running: git commit -m \"" + message + "\"")
-	message = commitType + "(" + feature + "): " + message
-	if err := runCommand("git", "commit", "-m", message); err != nil {
+	fullMessage := commitType + "(" + feature + "): " + message
+	fmt.Println("Running: git commit -m \"" + fullMessage + "\"")
+	if err := runCommand("git", "commit", "-m", fullMessage); err != nil {
 		fmt.Fprintf(os.Stderr, "Error during git commit: %v\n", err)
+		os.Exit(1)
+	}
+
+	exists, err := gitRemoteExists()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to check remote: %v\n", err)
+		os.Exit(1)
+	}
+
+	if !exists {
+		printRed("❌ Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
 		os.Exit(1)
 	}
 
