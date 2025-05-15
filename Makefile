@@ -1,6 +1,5 @@
 CMD_NAME = qwe
 INSTALL_PATH = /usr/local/bin/$(CMD_NAME)
-VERSION = v1.0.1
 
 all: tidy build install
 
@@ -10,7 +9,7 @@ tidy:
 
 build:
 	@echo "🔨 Building $(CMD_NAME)..."
-	go build -ldflags "-X main.Version=$(VERSION)" -o $(CMD_NAME) main.go
+	go build -ldflags "-X main.Version=$$(cat VERSION)" -o $(CMD_NAME) main.go
 
 install:
 	@echo "📦 Installing to $(INSTALL_PATH)..."
