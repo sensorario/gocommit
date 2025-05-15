@@ -10,6 +10,8 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+var Version = "dev"
+
 func runCommand(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
@@ -31,6 +33,16 @@ func printRed(msg string) {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		arg := os.Args[1]
+		if arg == "-v" || arg == "--version" {
+			fmt.Println(Version)
+			return
+		}
+		printRed("❌ Non sono accettati parametri ad eccezione di -v o --version")
+		os.Exit(1)
+	}
+
 	fmt.Println("Running: git add .")
 	if err := runCommand("git", "add", "."); err != nil {
 		fmt.Fprintf(os.Stderr, "Error during git add: %v\n", err)
