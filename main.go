@@ -44,17 +44,17 @@ func main() {
 	       os.Exit(1)
        }
 
-       // Ensure config.json exists in the project root
-       configPath := "config.json"
+       // Ensure gocommit.conf.json exists in the project root
+       configPath := "gocommit.conf.json"
        if _, err := os.Stat(configPath); os.IsNotExist(err) {
 	       f, err := os.Create(configPath)
 	       if err != nil {
-		       fmt.Fprintf(os.Stderr, "Error creating config.json: %v\n", err)
+			   fmt.Fprintf(os.Stderr, "Error creating %s: %v\n", configPath, err)
 		       os.Exit(1)
 	       }
 	       _, err = f.WriteString("{\n  \"onBeforeCommit\": \"\"\n}\n")
 	       if err != nil {
-		       fmt.Fprintf(os.Stderr, "Error writing to config.json: %v\n", err)
+			   fmt.Fprintf(os.Stderr, "Error writing to %s: %v\n", configPath, err)
 		       f.Close()
 		       os.Exit(1)
 	       }
