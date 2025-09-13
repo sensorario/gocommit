@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -34,7 +35,13 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error creating %s: %v\n", configPath, err)
 			os.Exit(1)
 		}
-		_, err = f.WriteString("{\n  \"onBeforeCommit\": \"\"\n}\n")
+		config := map[string]string{
+			"onBeforeCommit": "",
+			"onAfterCommit":  "",
+		}
+		encoder := json.NewEncoder(f)
+		encoder.SetIndent("", "  ")
+		err = encoder.Encode(config)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing to %s: %v\n", configPath, err)
 			f.Close()
@@ -59,6 +66,7 @@ func main() {
 			buf := make([]byte, 4096)
 			n, _ := confFile.Read(buf)
 			confStr := string(buf[:n])
+
 			// Simple parse for onBeforeCommit value
 			idx := strings.Index(confStr, "\"onBeforeCommit\"")
 			if idx != -1 {
@@ -76,6 +84,7 @@ func main() {
 					}
 				}
 			}
+
 			if len(onBeforeCommit) > 0 {
 				fmt.Printf("Running onBeforeCommit: %s\n", onBeforeCommit)
 				// Run the command using shell
@@ -116,6 +125,47 @@ func main() {
 		os.Exit(1)
 	}
 	message = strings.TrimSpace(message)
+
+	// Check for onAfterCommit in configuration and run it after commit
+	if _, err := os.Stat(confPath); err == nil {
+		confFile, err := os.Open(confPath)
+		if err == nil {
+			defer confFile.Close()
+			var onAfterCommit string
+			buf := make([]byte, 4096)
+			n, _ := confFile.Read(buf)
+			confStr := string(buf[:n])
+
+			// Simple parse for onAfterCommit value
+			idx := strings.Index(confStr, "\"onAfterCommit\"")
+			if idx != -1 {
+				rest := confStr[idx+len("\"onAfterCommit\""):]
+				colonIdx := strings.Index(rest, ":")
+				if colonIdx != -1 {
+					rest = rest[colonIdx+1:]
+					quoteIdx := strings.Index(rest, "\"")
+					if quoteIdx != -1 {
+						rest = rest[quoteIdx+1:]
+						endQuoteIdx := strings.Index(rest, "\"")
+						if endQuoteIdx != -1 {
+							onAfterCommit = rest[:endQuoteIdx]
+						}
+					}
+				}
+			}
+
+			if len(onAfterCommit) > 0 {
+				fmt.Printf("Running onAfterCommit: %s\n", onAfterCommit)
+				shellCmd := exec.Command("sh", "-c", onAfterCommit)
+				shellCmd.Stdout = os.Stdout
+				shellCmd.Stderr = os.Stderr
+				if err := shellCmd.Run(); err != nil {
+					fmt.Fprintf(os.Stderr, "Error running onAfterCommit: %v\n", err)
+					os.Exit(1)
+				}
+			}
+		}
+	}
 
 	fullMessage := commitType + "(" + feature + "): " + message
 	fmt.Println("Running: git commit -m \"" + fullMessage + "\"")
