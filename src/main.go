@@ -22,7 +22,7 @@ func main() {
 			fmt.Println(Version)
 			return
 		}
-		printRed("❌ Non sono accettati parametri ad eccezione di -v o --version")
+		printRed(" Non sono accettati parametri ad eccezione di -v o --version")
 		os.Exit(1)
 	}
 
@@ -131,7 +131,7 @@ func main() {
 	}
 
 	if !exists {
-		printRed("❌ Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
+		printRed(" Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
 		os.Exit(1)
 	}
 
