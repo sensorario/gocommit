@@ -33,21 +33,39 @@ func printRed(msg string) {
 }
 
 func main() {
-	if len(os.Args) > 1 {
-		arg := os.Args[1]
-		if arg == "-v" || arg == "--version" {
-			fmt.Println(Version)
-			return
-		}
-		printRed("❌ Non sono accettati parametri ad eccezione di -v o --version")
-		os.Exit(1)
-	}
 
-	fmt.Println("Running: git add .")
-	if err := runCommand("git", "add", "."); err != nil {
-		fmt.Fprintf(os.Stderr, "Error during git add: %v\n", err)
-		os.Exit(1)
-	}
+       if len(os.Args) > 1 {
+	       arg := os.Args[1]
+	       if arg == "-v" || arg == "--version" {
+		       fmt.Println(Version)
+		       return
+	       }
+	       printRed("❌ Non sono accettati parametri ad eccezione di -v o --version")
+	       os.Exit(1)
+       }
+
+       // Ensure config.json exists in the project root
+       configPath := "config.json"
+       if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	       f, err := os.Create(configPath)
+	       if err != nil {
+		       fmt.Fprintf(os.Stderr, "Error creating config.json: %v\n", err)
+		       os.Exit(1)
+	       }
+	       _, err = f.WriteString("{\n  \"onBeforeCommit\": \"\"\n}\n")
+	       if err != nil {
+		       fmt.Fprintf(os.Stderr, "Error writing to config.json: %v\n", err)
+		       f.Close()
+		       os.Exit(1)
+	       }
+	       f.Close()
+       }
+
+       fmt.Println("Running: git add .")
+       if err := runCommand("git", "add", "."); err != nil {
+	       fmt.Fprintf(os.Stderr, "Error during git add: %v\n", err)
+	       os.Exit(1)
+       }
 
 	prompt := promptui.Select{
 		Label: "Commit type",

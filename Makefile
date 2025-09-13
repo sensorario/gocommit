@@ -11,7 +11,7 @@ build:
 	@echo "🔨 Building $(CMD_NAME)..."
 	go build -ldflags "-X main.Version=$$(cat VERSION)" -o $(CMD_NAME) main.go
 
-install:
+install: build
 	@echo "📦 Installing to $(INSTALL_PATH)..."
 	sudo mv -f $(CMD_NAME) $(INSTALL_PATH)
 	@echo "✅ Command '$(CMD_NAME)' installed to $(INSTALL_PATH)"
