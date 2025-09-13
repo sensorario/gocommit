@@ -10,9 +10,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-
 var Version = "dev"
-
 
 // ...existing code...
 
@@ -94,7 +92,7 @@ func main() {
 
 	prompt := promptui.Select{
 		Label: "Commit type",
-		Items: []string{"wip", "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test"},
+		Items: []string{"feat", "fix", "chore", "refactor"},
 	}
 	_, commitType, err := prompt.Run()
 	if err != nil {

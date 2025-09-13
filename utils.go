@@ -1,10 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
-	"fmt"
 )
 
 func runCommand(name string, args ...string) error {
