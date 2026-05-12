@@ -109,14 +109,41 @@ func main() {
 		return
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("The feature name: ")
-	feature, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading message: %v\n", err)
-		os.Exit(1)
+	// Recupera il nome del branch corrente
+	branchNameBytes, err := exec.Command("git", "branch", "--show-current").Output()
+	branchName := strings.TrimSpace(string(branchNameBytes))
+
+	// Regex per estrarre il ticket Jira (es: ABCD-123)
+	ticket := ""
+	branchParts := strings.Split(branchName, "/")
+	for _, part := range branchParts {
+		if len(part) > 0 && len(ticket) == 0 {
+			// Cerca pattern tipo ABCD-123
+			if len(part) > 4 && strings.Contains(part, "-") {
+				pieces := strings.Split(part, "-")
+				if len(pieces) == 2 && len(pieces[0]) >= 2 && len(pieces[1]) > 0 {
+					ticket = part
+				}
+			}
+		}
 	}
-	feature = strings.TrimSpace(feature)
+
+	reader := bufio.NewReader(os.Stdin)
+	feature := ""
+	if ticket != "" {
+		fmt.Printf("The feature name [%s]: ", ticket)
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+		if input == "" {
+			feature = ticket
+		} else {
+			feature = input
+		}
+	} else {
+		fmt.Print("The feature name: ")
+		input, _ := reader.ReadString('\n')
+		feature = strings.TrimSpace(input)
+	}
 
 	fmt.Print("Enter commit message: ")
 	message, err := reader.ReadString('\n')
