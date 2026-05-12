@@ -18,7 +18,33 @@ func main() {
 			fmt.Println(Version)
 			return
 		}
-		commit.PrintRed("\u001f Non sono accettati parametri ad eccezione di -v o --version")
+		if arg == "help" || arg == "--help" || arg == "-h" {
+			fmt.Println("Usage: qwe [command]")
+			fmt.Println()
+			fmt.Println("Commands:")
+			fmt.Printf("  %-20s %s\n", "(no args)", "Start the interactive commit wizard")
+			fmt.Printf("  %-20s %s\n", "check", "Verify gocommit.conf.json exists and all variables are present; adds missing ones with defaults")
+			fmt.Printf("  %-20s %s\n", "help, -h, --help", "Show this help message")
+			fmt.Printf("  %-20s %s\n", "-v, --version", "Print the current version")
+			return
+		}
+		if arg == "check" {
+			configPath := "gocommit.conf.json"
+			added, err := commit.CheckConfig(configPath)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error checking config: %v\n", err)
+				os.Exit(1)
+			}
+			if len(added) == 0 {
+				commit.PrintGreen("Config OK: all variables are present in " + configPath)
+			} else {
+				for _, key := range added {
+					commit.PrintYellow("Added missing variable with default: " + key)
+				}
+			}
+			return
+		}
+		commit.PrintRed("Unknown command: " + arg + ". Run 'qwe help' to see available commands.")
 		os.Exit(1)
 	}
 
