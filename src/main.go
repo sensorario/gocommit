@@ -27,22 +27,22 @@ func main() {
 
 	configPath := "gocommit.conf.json"
 	if err := commit.EnsureConfig(configPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating config: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1001] Error creating config: %v\n", err)
 		os.Exit(1)
 	}
 
 	if err := commit.RunGitAdd(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error during git add: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1002] Error during git add: %v\n", err)
 		os.Exit(1)
 	}
 
 	config, err := commit.LoadConfig(configPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1003] Error loading config: %v\n", err)
 		os.Exit(1)
 	}
 	if err := commit.RunHook(config.OnBeforeCommit); err != nil {
-		fmt.Fprintf(os.Stderr, "Error running onBeforeCommit: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1004] Error running onBeforeCommit: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -52,13 +52,13 @@ func main() {
 	}
 	_, commitType, err := prompt.Run()
 	if err != nil {
-		fmt.Printf("Prompt failed: %v\n", err)
+		fmt.Printf("[ERR1005] Prompt failed: %v\n", err)
 		return
 	}
 
 	branchName, err := commit.CurrentBranch()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting branch: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1006] Error getting branch: %v\n", err)
 		os.Exit(1)
 	}
 	ticket := commit.ExtractJiraTicket(branchName)
@@ -66,31 +66,31 @@ func main() {
 	message := commit.AskCommitMessage()
 
 	if err := commit.RunHook(config.OnAfterCommit); err != nil {
-		fmt.Fprintf(os.Stderr, "Error running onAfterCommit: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1007] Error running onAfterCommit: %v\n", err)
 		os.Exit(1)
 	}
 
 	fullMessage := commitType + "(" + feature + "): " + message
 	fmt.Println("Running: git commit -m \"" + fullMessage + "\"")
 	if err := commit.RunGitCommit(fullMessage); err != nil {
-		fmt.Fprintf(os.Stderr, "Error during git commit: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1008] Error during git commit: %v\n", err)
 		os.Exit(1)
 	}
 
 	exists, err := commit.RemoteExists()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to check remote: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1009] Failed to check remote: %v\n", err)
 		os.Exit(1)
 	}
 
 	if !exists {
-		commit.PrintRed("\u001f Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
+		commit.PrintRed("[ERR1010] \u001f Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
 		os.Exit(1)
 	}
 
 	fmt.Println("Running: git push")
 	if err := commit.RunGitPush(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error during git push: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[ERR1011] Error during git push: %v\n", err)
 		os.Exit(1)
 	}
 }
