@@ -11,6 +11,11 @@ A simple Go CLI tool that stages all changes, commits them with a message, and p
 - [Go](https://go.dev/dl/) installed (`go version`)
 - `make` and `git` available on your system
 
+#### Go installs
+
+ - MacOS: brew install go
+ - ...
+
 ### Steps
 
 Clone the repository and install the tool globally:
