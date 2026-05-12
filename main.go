@@ -74,20 +74,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	exists, err := commit.RemoteExists()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to check remote: %v\n", err)
-		os.Exit(1)
-	}
-
-	if !exists {
-		commit.PrintRed("\u001f Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
-		os.Exit(1)
-	}
-
-	fmt.Println("Running: git push")
-	if err := commit.RunGitPush(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error during git push: %v\n", err)
-		os.Exit(1)
+	if config.PushAfterCommit {
+		exists, err := commit.RemoteExists()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to check remote: %v\n", err)
+			os.Exit(1)
+		}
+		if !exists {
+			commit.PrintRed("\u001f Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
+			os.Exit(1)
+		}
+		fmt.Println("Running: git push")
+		if err := commit.RunGitPush(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error during git push: %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
