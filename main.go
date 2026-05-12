@@ -6,15 +6,12 @@ import (
 
 	"github.com/manifoldco/promptui"
 
-	"commit"
+	"gocommit/commit"
 )
 
 var Version = "dev"
 
-// ...existing code...
-
 func main() {
-
 	if len(os.Args) > 1 {
 		arg := os.Args[1]
 		if arg == "-v" || arg == "--version" {
