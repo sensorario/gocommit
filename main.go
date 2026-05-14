@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
+	"os/exec"
 
 	"github.com/manifoldco/promptui"
 
@@ -25,6 +28,7 @@ func main() {
 			fmt.Printf("  %-20s %s\n", "(no args)", "Start the interactive commit wizard")
 			fmt.Printf("  %-20s %s\n", "branch", "Interactively switch to another git branch")
 			fmt.Printf("  %-20s %s\n", "check", "Verify gocommit.conf.json exists and all variables are present; adds missing ones with defaults")
+			fmt.Printf("  %-20s %s\n", "web", "Start a local web server and open it in the browser")
 			fmt.Printf("  %-20s %s\n", "help, -h, --help", "Show this help message")
 			fmt.Printf("  %-20s %s\n", "-v, --version", "Print the current version")
 			return
@@ -70,6 +74,93 @@ func main() {
 				os.Exit(1)
 			}
 			commit.PrintGreen("Switched to branch: " + selectedBranch)
+			return
+		}
+		if arg == "web" {
+			addr := "http://localhost:8080"
+			http.HandleFunc("/branches", func(w http.ResponseWriter, r *http.Request) {
+				branches, err := commit.ListLocalBranches()
+				if err != nil {
+					http.Error(w, "failed to list branches", http.StatusInternalServerError)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(branches)
+			})
+			http.HandleFunc("/checkout", func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPost {
+					http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+					return
+				}
+				var body struct {
+					Branch string `json:"branch"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Branch == "" {
+					http.Error(w, "invalid request", http.StatusBadRequest)
+					return
+				}
+				if err := commit.CheckoutBranch(body.Branch); err != nil {
+					http.Error(w, "checkout failed: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]string{"branch": body.Branch})
+			})
+			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				fmt.Fprint(w, `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>gocommit</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    button { display: block; margin: 0.25rem 0; padding: 0.4rem 1rem; cursor: pointer; }
+    #message { margin-top: 1rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Hello World</h1>
+  <h2>Branches</h2>
+  <div id="branches"></div>
+  <div id="message"></div>
+  <script>
+    function checkout(branch) {
+      fetch('/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch })
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('message').textContent = 'Switched to: ' + data.branch;
+      })
+      .catch(() => {
+        document.getElementById('message').textContent = 'Error switching branch.';
+      });
+    }
+
+    fetch('/branches')
+      .then(r => r.json())
+      .then(branches => {
+        const container = document.getElementById('branches');
+        branches.forEach(b => {
+          const btn = document.createElement('button');
+          btn.textContent = b;
+          btn.onclick = () => checkout(b);
+          container.appendChild(btn);
+        });
+      });
+  </script>
+</body>
+</html>`)
+			})
+			fmt.Println("Serving on " + addr)
+			exec.Command("open", addr).Start()
+			if err := http.ListenAndServe(":8080", nil); err != nil {
+				fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+				os.Exit(1)
+			}
 			return
 		}
 		commit.PrintRed("Unknown command: " + arg + ". Run 'qwe help' to see available commands.")
