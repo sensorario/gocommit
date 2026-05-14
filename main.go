@@ -34,14 +34,16 @@ func main() {
 			fmt.Printf("  %-20s %s\n", "branch", "Interactively switch to another git branch")
 			fmt.Printf("  %-20s %s\n", "check", "Verify gocommit.conf.json exists and all variables are present; adds missing ones with defaults")
 			fmt.Printf("  %-20s %s\n", "web", "Start a local web server in the background and open it in the browser")
+			fmt.Printf("  %-20s %s\n", "web-stop", "Stop the background web server")
 			fmt.Printf("  %-20s %s\n", "help, -h, --help", "Show this help message")
 			fmt.Printf("  %-20s %s\n", "-v, --version", "Print the current version")
 			return
 		}
 		commands := map[string]func(){
-			"branch": branch.Run,
-			"check":  check.Run,
-			"web":    web.Run,
+			"branch":   branch.Run,
+			"check":    check.Run,
+			"web":      web.Run,
+			"web-stop": web.Kill,
 		}
 		if fn, ok := commands[arg]; ok {
 			fn()
