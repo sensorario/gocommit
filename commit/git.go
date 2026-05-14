@@ -22,6 +22,29 @@ func RemoteExists() (bool, error) {
 	return strings.TrimSpace(string(output)) != "", nil
 }
 
+func ListBranches() ([]string, error) {
+	output, err := exec.Command("git", "branch", "--format=%(refname:short)").Output()
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	var branches []string
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		if l != "" {
+			branches = append(branches, l)
+		}
+	}
+	return branches, nil
+}
+
+func CheckoutBranch(branch string) error {
+	cmd := exec.Command("git", "checkout", branch)
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}
+
 func RunGitAdd() error {
 	cmd := exec.Command("git", "add", ".")
 	cmd.Stdout = nil
