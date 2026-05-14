@@ -24,33 +24,12 @@ func main() {
 			fmt.Println("Commands:")
 			fmt.Printf("  %-20s %s\n", "(no args)", "Start the interactive commit wizard")
 			fmt.Printf("  %-20s %s\n", "branch", "Interactively switch to another git branch")
-		fmt.Printf("  %-20s %s\n", "check", "Verify gocommit.conf.json exists and all variables are present; adds missing ones with defaults")
+			fmt.Printf("  %-20s %s\n", "check", "Verify gocommit.conf.json exists and all variables are present; adds missing ones with defaults")
 			fmt.Printf("  %-20s %s\n", "help, -h, --help", "Show this help message")
 			fmt.Printf("  %-20s %s\n", "-v, --version", "Print the current version")
 			return
 		}
-		if arg == "branch" {
-		branches, err := commit.ListBranches()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error listing branches: %v\n", err)
-			os.Exit(1)
-		}
-		prompt := promptui.Select{
-			Label: "Select branch",
-			Items: branches,
-		}
-		_, selected, err := prompt.Run()
-		if err != nil {
-			fmt.Printf("Prompt failed: %v\n", err)
-			os.Exit(1)
-		}
-		if err := commit.CheckoutBranch(selected); err != nil {
-			fmt.Fprintf(os.Stderr, "Error switching branch: %v\n", err)
-			os.Exit(1)
-		}
-		commit.PrintGreen("Switched to branch: " + selected)
-		return
-		}
+
 		if arg == "check" {
 			configPath := "gocommit.conf.json"
 			added, err := commit.CheckConfig(configPath)
@@ -65,6 +44,32 @@ func main() {
 					commit.PrintYellow("Added missing variable with default: " + key)
 				}
 			}
+			return
+		}
+		if arg == "branch" {
+			branches, err := commit.ListLocalBranches()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error listing branches: %v\n", err)
+				os.Exit(1)
+			}
+			if len(branches) == 0 {
+				fmt.Fprintf(os.Stderr, "No local branches found.\n")
+				os.Exit(1)
+			}
+			prompt := promptui.Select{
+				Label: "Select branch",
+				Items: branches,
+			}
+			_, selectedBranch, err := prompt.Run()
+			if err != nil {
+				fmt.Printf("Prompt failed: %v\n", err)
+				os.Exit(1)
+			}
+			if err := commit.CheckoutBranch(selectedBranch); err != nil {
+				fmt.Fprintf(os.Stderr, "Error switching branch: %v\n", err)
+				os.Exit(1)
+			}
+			commit.PrintGreen("Switched to branch: " + selectedBranch)
 			return
 		}
 		commit.PrintRed("Unknown command: " + arg + ". Run 'qwe help' to see available commands.")
