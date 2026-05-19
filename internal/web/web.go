@@ -103,12 +103,16 @@ func Serve() {
 			http.Error(w, "invalid request", http.StatusBadRequest)
 			return
 		}
-		if err := commit.CheckoutBranch(body.Branch); err != nil {
-			http.Error(w, "checkout failed: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"branch": body.Branch})
+		   if err := commit.CheckoutBranch(body.Branch); err != nil {
+			   status := http.StatusInternalServerError
+			   if _, ok := err.(*commit.CheckoutError); ok {
+				   status = http.StatusConflict
+			   }
+			   http.Error(w, "checkout failed: "+err.Error(), status)
+			   return
+		   }
+		   w.Header().Set("Content-Type", "application/json")
+		   json.NewEncoder(w).Encode(map[string]string{"branch": body.Branch})
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

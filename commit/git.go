@@ -56,11 +56,36 @@ func ListBranches() ([]string, error) {
 	return branches, nil
 }
 
+// IsWorkingDirectoryDirty returns true if there are uncommitted changes
+func IsWorkingDirectoryDirty() (bool, error) {
+	cmd := exec.Command("git", "status", "--porcelain")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(string(output)) != "", nil
+}
+
 func CheckoutBranch(branch string) error {
+	dirty, err := IsWorkingDirectoryDirty()
+	if err != nil {
+		return err
+	}
+	if dirty {
+		return &CheckoutError{"Cannot switch branch: working directory is dirty. Please commit or stash your changes first."}
+	}
 	cmd := exec.Command("git", "checkout", branch)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	return cmd.Run()
+}
+
+type CheckoutError struct {
+	msg string
+}
+
+func (e *CheckoutError) Error() string {
+	return e.msg
 }
 
 func RunGitAdd() error {

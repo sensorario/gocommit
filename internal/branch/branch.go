@@ -28,9 +28,12 @@ func Run() {
 		fmt.Printf("Prompt failed: %v\n", err)
 		os.Exit(1)
 	}
-	if err := commit.CheckoutBranch(selectedBranch); err != nil {
-		fmt.Fprintf(os.Stderr, "Error switching branch: %v\n", err)
-		os.Exit(1)
-	}
-	commit.PrintGreen("Switched to branch: " + selectedBranch)
+	   if err := commit.CheckoutBranch(selectedBranch); err != nil {
+		   fmt.Fprintf(os.Stderr, "Error switching branch: %v\n", err)
+		   if _, ok := err.(*commit.CheckoutError); ok {
+			   os.Exit(2)
+		   }
+		   os.Exit(1)
+	   }
+	   commit.PrintGreen("Switched to branch: " + selectedBranch)
 }
