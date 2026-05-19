@@ -76,8 +76,32 @@
               remotes.forEach((remote) => {
                 const li = document.createElement("li");
                 const a = document.createElement("a");
-                a.href = remote.URL;
-                a.textContent = remote.Name + ": " + remote.URL;
+                // Trasforma l'URL git in URL web
+                let webUrl = remote.URL;
+                // GitHub SSH: git@github.com:user/repo.git
+                // Bitbucket SSH: git@bitbucket.org:user/repo.git
+                // HTTPS: https://github.com/user/repo.git
+                if (webUrl.startsWith("git@github.com:")) {
+                  webUrl = webUrl.replace(
+                    "git@github.com:",
+                    "https://github.com/",
+                  );
+                } else if (webUrl.startsWith("git@bitbucket.org:")) {
+                  webUrl = webUrl.replace(
+                    "git@bitbucket.org:",
+                    "https://bitbucket.org/",
+                  );
+                } else if (webUrl.startsWith("https://github.com/")) {
+                  // già ok
+                } else if (webUrl.startsWith("https://bitbucket.org/")) {
+                  // già ok
+                }
+                // Rimuovi .git finale se presente
+                if (webUrl.endsWith(".git")) {
+                  webUrl = webUrl.slice(0, -4);
+                }
+                a.href = webUrl;
+                a.textContent = remote.Name + ": " + webUrl;
                 a.target = "_blank";
                 li.appendChild(a);
                 ul.appendChild(li);
