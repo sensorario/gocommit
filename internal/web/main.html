@@ -40,8 +40,12 @@
     <div id="tab-content-branches" class="tab-content active">
       <div id="branches"></div>
     </div>
+
     <div id="tab-content-info" class="tab-content" style="display: none">
-      <div id="info">Qui puoi mettere le info che vuoi mostrare.</div>
+      <div id="info">
+        <h3>Remotes</h3>
+        <ul id="remotes-list"></ul>
+      </div>
     </div>
 
     <div id="message"></div>
@@ -53,11 +57,31 @@
         document.getElementById("tab-content-branches").style.display = "";
         document.getElementById("tab-content-info").style.display = "none";
       };
+
       document.getElementById("tab-info").onclick = function () {
         document.getElementById("tab-info").classList.add("active");
         document.getElementById("tab-branches").classList.remove("active");
         document.getElementById("tab-content-info").style.display = "";
         document.getElementById("tab-content-branches").style.display = "none";
+        // Carica i remoti solo la prima volta
+        if (!document.getElementById("remotes-list").dataset.loaded) {
+          fetch("/remotes")
+            .then((r) => r.json())
+            .then((remotes) => {
+              const ul = document.getElementById("remotes-list");
+              ul.innerHTML = "";
+              remotes.forEach((remote) => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = remote.URL;
+                a.textContent = remote.Name + ": " + remote.URL;
+                a.target = "_blank";
+                li.appendChild(a);
+                ul.appendChild(li);
+              });
+              ul.dataset.loaded = "1";
+            });
+        }
       };
 
       function checkout(branch) {

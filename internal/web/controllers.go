@@ -7,6 +7,17 @@ import (
 	"os"
 )
 
+// Restituisce tutti i remoti come JSON
+func RemotesController(w http.ResponseWriter, r *http.Request) {
+	remotes, err := ListRemotes()
+	if err != nil {
+		http.Error(w, "Could not read remotes", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(remotes)
+}
+
 func BranchesController(w http.ResponseWriter, r *http.Request) {
 	branches, err := commit.ListLocalBranches()
 	if err != nil {
