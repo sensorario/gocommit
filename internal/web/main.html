@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>gocommit maria verginess</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+      }
+      button {
+        display: block;
+        margin: 0.25rem 0;
+        padding: 0.4rem 1rem;
+        cursor: pointer;
+      }
+      #message {
+        margin-top: 1rem;
+        font-weight: bold;
+      }
+      .navbar {
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 1rem;
+        border-bottom: #ccc solid 1px;
+      }
+      button {
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hello World</h1>
+
+    <div class="navbar">
+      <button id="tab-branches" class="tab active">Branches</button>
+      <button id="tab-info" class="tab">Info</button>
+    </div>
+
+    <div id="tab-content-branches" class="tab-content active">
+      <div id="branches"></div>
+    </div>
+    <div id="tab-content-info" class="tab-content" style="display: none">
+      <div id="info">Qui puoi mettere le info che vuoi mostrare.</div>
+    </div>
+
+    <div id="message"></div>
+    <script>
+      // Tab switching logic
+      document.getElementById("tab-branches").onclick = function () {
+        document.getElementById("tab-branches").classList.add("active");
+        document.getElementById("tab-info").classList.remove("active");
+        document.getElementById("tab-content-branches").style.display = "";
+        document.getElementById("tab-content-info").style.display = "none";
+      };
+      document.getElementById("tab-info").onclick = function () {
+        document.getElementById("tab-info").classList.add("active");
+        document.getElementById("tab-branches").classList.remove("active");
+        document.getElementById("tab-content-info").style.display = "";
+        document.getElementById("tab-content-branches").style.display = "none";
+      };
+
+      function checkout(branch) {
+        fetch("/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ branch }),
+        })
+          .then((r) => {
+            if (!r.ok) {
+              return r.text().then((t) => {
+                throw new Error(t);
+              });
+            }
+            return r.json();
+          })
+          .then((data) => {
+            document.getElementById("message").textContent =
+              "Switched to: " + data.branch;
+          })
+          .catch((err) => {
+            document.getElementById("message").textContent =
+              "Error: " + err.message;
+          });
+      }
+
+      fetch("/branches")
+        .then((r) => r.json())
+        .then((branches) => {
+          const container = document.getElementById("branches");
+          branches.forEach((b) => {
+            const btn = document.createElement("button");
+            btn.textContent = `switch to... ${b}`;
+            btn.onclick = () => checkout(b);
+            container.appendChild(btn);
+          });
+        });
+    </script>
+  </body>
+</html>

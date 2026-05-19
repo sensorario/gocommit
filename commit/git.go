@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+func GetRepoInfo() (map[string]interface{}, error) {
+	return map[string]interface{}{"message": "niente da vedere qui"}, nil
+}
+
 // ListLocalBranches returns a slice of all local git branch names
 func ListLocalBranches() ([]string, error) {
 	cmd := exec.Command("git", "branch", "--format=%(refname:short)")

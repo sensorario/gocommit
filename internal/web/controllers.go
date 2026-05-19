@@ -2,9 +2,9 @@ package web
 
 import (
 	"encoding/json"
-	"fmt"
 	"gocommit/commit"
 	"net/http"
+	"os"
 )
 
 func BranchesController(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +15,16 @@ func BranchesController(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(branches)
+}
+
+func InfoController(w http.ResponseWriter, r *http.Request) {
+	info, err := commit.GetRepoInfo()
+	if err != nil {
+		http.Error(w, "failed to get repo info", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
 }
 
 func CheckoutController(w http.ResponseWriter, r *http.Request) {
@@ -43,5 +53,10 @@ func CheckoutController(w http.ResponseWriter, r *http.Request) {
 
 func MainPageController(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprint(w, MainHTML)
+	html, err := os.ReadFile("internal/web/main.html")
+	if err != nil {
+		http.Error(w, "Could not load HTML", http.StatusInternalServerError)
+		return
+	}
+	w.Write(html)
 }

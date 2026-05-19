@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const addr = "http://localhost:8082"
+const addr = "http://localhost:8080"
 const pidFile = "/tmp/gocommit-web.pid"
 
 func Run() {
@@ -80,7 +80,7 @@ func pidByPort(port string) (int, error) {
 
 func Serve() {
 	RegisterRoutes()
-       if err := http.ListenAndServe(":8082", nil); err != nil {
+       if err := http.ListenAndServe(":8080", nil); err != nil {
                os.Exit(1)
        }
 }
