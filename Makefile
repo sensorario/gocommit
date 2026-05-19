@@ -20,7 +20,7 @@ tidy:
 
 build: prepare-embed-version
 	@echo "🔨 Building $(CMD_NAME)..."
-	go build -ldflags "-X main.Version=$$(cat VERSION)" -o $(CMD_NAME) main.go
+	go build -ldflags "-X main.Version=$$(cat VERSION)" -o $(CMD_NAME)
 
 prepare-embed-version:
 	cp VERSION internal/web/VERSION

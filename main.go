@@ -11,7 +11,12 @@ import (
 	"gocommit/internal/wizard"
 )
 
+
 var Version = EmbeddedVersion
+
+func init() {
+	web.Version = Version
+}
 
 func main() {
 	// internal flag used by 'qwe web' to start the background HTTP server
