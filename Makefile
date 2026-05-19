@@ -18,9 +18,12 @@ tidy:
 	@echo "🔍 Running go mod tidy..."
 	go mod tidy
 
-build:
+build: prepare-embed-version
 	@echo "🔨 Building $(CMD_NAME)..."
 	go build -ldflags "-X main.Version=$$(cat VERSION)" -o $(CMD_NAME) main.go
+
+prepare-embed-version:
+	cp VERSION internal/web/VERSION
 
 install: build
 	@echo "📦 Installing to $(INSTALL_PATH)..."

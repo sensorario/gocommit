@@ -7,6 +7,14 @@ import (
 	"os"
 )
 
+var DevMode = false
+
+func init() {
+       if os.Getenv("DEV_MODE") == "1" {
+	       DevMode = true
+       }
+}
+
 // Restituisce la versione corrente
 func VersionController(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -69,11 +77,17 @@ func CheckoutController(w http.ResponseWriter, r *http.Request) {
 }
 
 func MainPageController(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	html, err := os.ReadFile("internal/web/main.html")
-	if err != nil {
-		http.Error(w, "Could not load HTML", http.StatusInternalServerError)
-		return
-	}
-	w.Write(html)
+	       w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	       var html []byte
+	       var err error
+	       if DevMode {
+		       html, err = os.ReadFile("internal/web/main.html")
+		       if err != nil {
+			       http.Error(w, "Could not load HTML", http.StatusInternalServerError)
+			       return
+		       }
+	       } else {
+		       html = EmbeddedHTML
+	       }
+	       w.Write(html)
 }
