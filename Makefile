@@ -1,7 +1,18 @@
 CMD_NAME = qwe
 INSTALL_PATH = /usr/local/bin/$(CMD_NAME)
 
-all: tidy build install
+
+all: bumpversion tidy build install
+define PATCH_VERSION
+$(shell grep -oE '[0-9]+$$' VERSION)
+endef
+
+bumpversion:
+	@echo "🔢 Bumping patch version..."
+	old=$$(grep -oE '[0-9]+$$' VERSION); \
+	new=$$(($$old + 1)); \
+	sed -i '' -E "s/(v1\.0\.)([0-9]+)/\\1$$new/" VERSION; \
+	echo "🔢 Version updated to $$(cat VERSION)"
 
 tidy:
 	@echo "🔍 Running go mod tidy..."

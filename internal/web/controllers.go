@@ -7,6 +7,12 @@ import (
 	"os"
 )
 
+// Restituisce la versione corrente
+func VersionController(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(GetVersion()))
+}
+
 // Restituisce tutti i remoti come JSON
 func RemotesController(w http.ResponseWriter, r *http.Request) {
 	remotes, err := ListRemotes()

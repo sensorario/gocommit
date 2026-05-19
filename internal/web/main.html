@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>gocommit maria verginess</title>
+    <title>Gocommit</title>
     <style>
       body {
         font-family: sans-serif;
@@ -30,7 +30,7 @@
     </style>
   </head>
   <body>
-    <h1>Hello World</h1>
+    <h1>Gocommit</h1>
 
     <div class="navbar">
       <button id="tab-branches" class="tab active">Branches</button>
@@ -49,6 +49,9 @@
     </div>
 
     <div id="message"></div>
+    <footer style="margin-top: 2em; color: #888; font-size: 0.9em">
+      Versione: <span id="build-version">...</span>
+    </footer>
     <script>
       // Tab switching logic
       document.getElementById("tab-branches").onclick = function () {
@@ -118,6 +121,13 @@
             btn.onclick = () => checkout(b);
             container.appendChild(btn);
           });
+        });
+
+      // Carica la versione build
+      fetch("/version")
+        .then((r) => r.text())
+        .then((ver) => {
+          document.getElementById("build-version").textContent = ver.trim();
         });
     </script>
   </body>
