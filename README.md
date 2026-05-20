@@ -1,5 +1,9 @@
 # gocommit
 
+<p align="center">
+	<img src="logo/logo.svg" alt="gocommit logo" width="200"/>
+</p>
+
 A simple Go CLI tool that stages all changes, commits them with a message, and pushes to your Git repository.
 
 ![Prompt Example](prompt.png)
@@ -13,8 +17,8 @@ A simple Go CLI tool that stages all changes, commits them with a message, and p
 
 #### Go installs
 
- - MacOS: brew install go
- - ...
+- MacOS: brew install go
+- ...
 
 ### Steps
 
