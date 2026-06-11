@@ -17,8 +17,8 @@ A simple Go CLI tool that stages all changes, commits them with a message, and p
 ## Documentation
 
 - [Installation](doc/installation.md)
-- [Usage](doc/usage.md)
 - [Development](doc/development.md)
+- [Usage](doc/usage.md)
 
 ## License
 
