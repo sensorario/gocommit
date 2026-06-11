@@ -9,6 +9,25 @@ import (
 	"gocommit/commit"
 )
 
+const customFeatureOption = "Custom..."
+
+func selectFeatureName(ticket string) string {
+	recent := commit.RecentFeatureNames(5)
+	items := make([]string, 0, len(recent)+1)
+	items = append(items, recent...)
+	items = append(items, customFeatureOption)
+
+	sel := promptui.Select{
+		Label: "Feature name",
+		Items: items,
+	}
+	_, chosen, err := sel.Run()
+	if err != nil || chosen == customFeatureOption {
+		return commit.AskFeatureName(ticket)
+	}
+	return chosen
+}
+
 func Run() {
 	configPath := "gocommit.conf.json"
 	if err := commit.EnsureConfig(configPath); err != nil {
@@ -47,7 +66,8 @@ func Run() {
 		os.Exit(1)
 	}
 	ticket := commit.ExtractJiraTicket(branchName)
-	feature := commit.AskFeatureName(ticket)
+
+	feature := selectFeatureName(ticket)
 	message := commit.AskCommitMessage()
 
 	if err := commit.RunHook(config.OnAfterCommit); err != nil {

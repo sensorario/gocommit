@@ -2,6 +2,7 @@ package commit
 
 import (
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -90,6 +91,33 @@ type CheckoutError struct {
 
 func (e *CheckoutError) Error() string {
 	return e.msg
+}
+
+// RecentFeatureNames parses git log subjects and returns unique scopes from
+// conventional commits (e.g. "feat(scope): msg"), most-recent first, up to n.
+func RecentFeatureNames(n int) []string {
+	out, err := exec.Command("git", "log", "--pretty=format:%s", "-100").Output()
+	if err != nil {
+		return nil
+	}
+	re := regexp.MustCompile(`^\w+\(([^)]+)\):`)
+	seen := map[string]bool{}
+	var names []string
+	for _, line := range strings.Split(string(out), "\n") {
+		m := re.FindStringSubmatch(strings.TrimSpace(line))
+		if len(m) < 2 {
+			continue
+		}
+		scope := m[1]
+		if !seen[scope] {
+			seen[scope] = true
+			names = append(names, scope)
+			if len(names) == n {
+				break
+			}
+		}
+	}
+	return names
 }
 
 func RunGitAdd() error {
