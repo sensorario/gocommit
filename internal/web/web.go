@@ -11,7 +11,16 @@ import (
 )
 
 const addr = "http://localhost:8080"
-const pidFile = "/tmp/gocommit-web.pid"
+
+func pidFilePath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "/tmp/gocommit-web.pid"
+	}
+	dir := home + "/.sensorario-qwe"
+	os.MkdirAll(dir, 0700)
+	return dir + "/gocommit-web.pid"
+}
 
 func Run() {
 	self, err := os.Executable()
@@ -27,7 +36,7 @@ func Run() {
 		os.Exit(1)
 	}
 	pid := cmd.Process.Pid
-	if err := os.WriteFile(pidFile, []byte(strconv.Itoa(pid)), 0600); err != nil {
+	if err := os.WriteFile(pidFilePath(), []byte(strconv.Itoa(pid)), 0600); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: could not write pid file: %v\n", err)
 	}
 	commit.PrintGreen("Web server started at " + addr + " (pid " + fmt.Sprint(pid) + ")")
@@ -38,7 +47,7 @@ func Kill() {
 	pid, err := pidByPort("8080")
 	if err != nil || pid == 0 {
 		// fall back to pid file
-		data, ferr := os.ReadFile(pidFile)
+		data, ferr := os.ReadFile(pidFilePath())
 		if ferr != nil {
 			commit.PrintRed("Web server does not appear to be running on port 8080.")
 			os.Exit(1)
@@ -58,7 +67,7 @@ func Kill() {
 		commit.PrintRed(fmt.Sprintf("Could not kill process %d: %v", pid, err))
 		os.Exit(1)
 	}
-	os.Remove(pidFile)
+	os.Remove(pidFilePath())
 	commit.PrintGreen(fmt.Sprintf("Web server (pid %d) stopped.", pid))
 }
 
