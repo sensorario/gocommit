@@ -159,15 +159,11 @@
         const btn = document.getElementById("btn-stop");
         btn.disabled = true;
         btn.textContent = "Stopping...";
-        fetch("/shutdown", { method: "POST" })
-          .then(() => {
-            document.getElementById("message").textContent = "Server stopped.";
-            btn.textContent = "Stopped";
-          })
-          .catch(() => {
-            document.getElementById("message").textContent = "Server stopped.";
-            btn.textContent = "Stopped";
-          });
+        const close = () => {
+          document.getElementById("message").textContent = "Server stopped. Closing tab...";
+          setTimeout(() => window.close(), 500);
+        };
+        fetch("/shutdown", { method: "POST" }).then(close).catch(close);
       }
     </script>
   </body>
