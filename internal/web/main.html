@@ -49,8 +49,9 @@
     </div>
 
     <div id="message"></div>
-    <footer style="margin-top: 2em; color: #888; font-size: 0.9em">
-      Versione: <span id="build-version">...</span>
+    <footer style="margin-top: 2em; color: #888; font-size: 0.9em; display: flex; align-items: center; gap: 1.5em;">
+      <span>Versione: <span id="build-version">...</span></span>
+      <button id="btn-stop" style="background:#c0392b;color:#fff;border:none;border-radius:4px;padding:0.3rem 0.9rem;cursor:pointer;font-size:0.85em;" onclick="stopServer()">Stop server</button>
     </footer>
     <script>
       // Tab switching logic
@@ -153,6 +154,21 @@
         .then((ver) => {
           document.getElementById("build-version").textContent = ver.trim();
         });
+
+      function stopServer() {
+        const btn = document.getElementById("btn-stop");
+        btn.disabled = true;
+        btn.textContent = "Stopping...";
+        fetch("/shutdown", { method: "POST" })
+          .then(() => {
+            document.getElementById("message").textContent = "Server stopped.";
+            btn.textContent = "Stopped";
+          })
+          .catch(() => {
+            document.getElementById("message").textContent = "Server stopped.";
+            btn.textContent = "Stopped";
+          });
+      }
     </script>
   </body>
 </html>

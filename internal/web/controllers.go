@@ -76,6 +76,16 @@ func CheckoutController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"branch": body.Branch})
 }
 
+func ShutdownController(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "shutting down"})
+	shutdownCh <- struct{}{}
+}
+
 func MainPageController(w http.ResponseWriter, r *http.Request) {
 	       w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	       var html []byte

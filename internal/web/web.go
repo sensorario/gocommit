@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"gocommit/commit"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 )
+
+var shutdownCh = make(chan struct{}, 1)
 
 const addr = "http://localhost:8080"
 
@@ -89,7 +92,12 @@ func pidByPort(port string) (int, error) {
 
 func Serve() {
 	RegisterRoutes()
-       if err := http.ListenAndServe(":8080", nil); err != nil {
-               os.Exit(1)
-       }
+	srv := &http.Server{Addr: ":8080"}
+	go func() {
+		<-shutdownCh
+		srv.Shutdown(context.Background())
+	}()
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		os.Exit(1)
+	}
 }
