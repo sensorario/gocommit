@@ -89,9 +89,34 @@ func Run() {
 			os.Exit(1)
 		}
 		if !exists {
-			commit.PrintRed("\u001f Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
+			commit.PrintRed("Nessun remote presente. Usa 'git remote add origin <url>' per aggiungerne uno.")
 			os.Exit(1)
 		}
+
+		hasUpstream, err := commit.BranchHasUpstream()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to check upstream: %v\n", err)
+			os.Exit(1)
+		}
+
+		if !hasUpstream {
+			sel := promptui.Select{
+				Label: "Il branch non ha un upstream remoto. Impostare 'origin/" + branchName + "' come upstream?",
+				Items: []string{"Si", "No"},
+			}
+			_, choice, err := sel.Run()
+			if err != nil || choice == "No" {
+				fmt.Println("Push saltato.")
+				return
+			}
+			fmt.Println("Running: git push --set-upstream origin " + branchName)
+			if err := commit.RunGitPushSetUpstream(branchName); err != nil {
+				fmt.Fprintf(os.Stderr, "Error during git push --set-upstream: %v\n", err)
+				os.Exit(1)
+			}
+			return
+		}
+
 		fmt.Println("Running: git push")
 		if err := commit.RunGitPush(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error during git push: %v\n", err)

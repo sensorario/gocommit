@@ -134,8 +134,24 @@ func RunGitCommit(msg string) error {
 	return cmd.Run()
 }
 
+func BranchHasUpstream() (bool, error) {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+	err := cmd.Run()
+	if err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 func RunGitPush() error {
 	cmd := exec.Command("git", "push")
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}
+
+func RunGitPushSetUpstream(branch string) error {
+	cmd := exec.Command("git", "push", "--set-upstream", "origin", branch)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	return cmd.Run()
