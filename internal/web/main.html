@@ -13,6 +13,7 @@
         margin: 0.25rem 0;
         padding: 0.4rem 1rem;
         cursor: pointer;
+        text-transform: uppercase;
       }
       #message {
         margin-top: 1rem;
@@ -24,8 +25,20 @@
         gap: 1rem;
         border-bottom: #ccc solid 1px;
       }
-      button {
+      .tab {
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        display: inline;
+        margin: 0;
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
         text-transform: uppercase;
+        font-size: 0.9em;
+      }
+      .tab.active {
+        font-weight: bold;
+        border-bottom: 2px solid #333;
       }
     </style>
   </head>
@@ -34,11 +47,16 @@
 
     <div class="navbar">
       <button id="tab-branches" class="tab active">Branches</button>
+      <button id="tab-prs" class="tab">Pull Requests</button>
       <button id="tab-info" class="tab">Info</button>
     </div>
 
-    <div id="tab-content-branches" class="tab-content active">
+    <div id="tab-content-branches" class="tab-content">
       <div id="branches"></div>
+    </div>
+
+    <div id="tab-content-prs" class="tab-content" style="display: none">
+      <div id="prs"></div>
     </div>
 
     <div id="tab-content-info" class="tab-content" style="display: none">
@@ -50,66 +68,81 @@
 
     <div id="message"></div>
     <footer style="margin-top: 2em; color: #888; font-size: 0.9em; display: flex; align-items: center; gap: 1.5em;">
-      <span>Versione: <span id="build-version">...</span></span>
+      <span>Version: <span id="build-version">...</span></span>
       <button id="btn-stop" style="background:#c0392b;color:#fff;border:none;border-radius:4px;padding:0.3rem 0.9rem;cursor:pointer;font-size:0.85em;" onclick="stopServer()">Stop server</button>
     </footer>
     <script>
-      // Tab switching logic
-      document.getElementById("tab-branches").onclick = function () {
-        document.getElementById("tab-branches").classList.add("active");
-        document.getElementById("tab-info").classList.remove("active");
-        document.getElementById("tab-content-branches").style.display = "";
-        document.getElementById("tab-content-info").style.display = "none";
+      const TABS = ["branches", "prs", "info"];
+
+      function showTab(name) {
+        TABS.forEach((t) => {
+          document.getElementById("tab-" + t).classList.remove("active");
+          document.getElementById("tab-content-" + t).style.display = "none";
+        });
+        document.getElementById("tab-" + name).classList.add("active");
+        document.getElementById("tab-content-" + name).style.display = "";
+      }
+
+      document.getElementById("tab-branches").onclick = () => showTab("branches");
+
+      document.getElementById("tab-prs").onclick = function () {
+        showTab("prs");
+        const container = document.getElementById("prs");
+        if (container.dataset.loaded) return;
+        container.textContent = "Loading...";
+        fetch("/pull-requests")
+          .then((r) => {
+            if (!r.ok) return r.text().then((t) => { throw new Error(t); });
+            return r.json();
+          })
+          .then((prs) => {
+            container.innerHTML = "";
+            if (!prs || prs.length === 0) {
+              container.textContent = "No open pull requests.";
+              container.dataset.loaded = "1";
+              return;
+            }
+            prs.forEach((pr) => {
+              const btn = document.createElement("button");
+              btn.textContent = "#" + pr.number + " " + pr.title;
+              btn.onclick = () => window.open(pr.url, "_blank");
+              container.appendChild(btn);
+            });
+            container.dataset.loaded = "1";
+          })
+          .catch((err) => {
+            container.textContent = "Error: " + err.message;
+          });
       };
 
       document.getElementById("tab-info").onclick = function () {
-        document.getElementById("tab-info").classList.add("active");
-        document.getElementById("tab-branches").classList.remove("active");
-        document.getElementById("tab-content-info").style.display = "";
-        document.getElementById("tab-content-branches").style.display = "none";
-        // Carica i remoti solo la prima volta
-        if (!document.getElementById("remotes-list").dataset.loaded) {
-          fetch("/remotes")
-            .then((r) => r.json())
-            .then((remotes) => {
-              const ul = document.getElementById("remotes-list");
-              ul.innerHTML = "";
-              remotes.forEach((remote) => {
-                const li = document.createElement("li");
-                const a = document.createElement("a");
-                // Trasforma l'URL git in URL web
-                let webUrl = remote.URL;
-                // GitHub SSH: git@github.com:user/repo.git
-                // Bitbucket SSH: git@bitbucket.org:user/repo.git
-                // HTTPS: https://github.com/user/repo.git
-                if (webUrl.startsWith("git@github.com:")) {
-                  webUrl = webUrl.replace(
-                    "git@github.com:",
-                    "https://github.com/",
-                  );
-                } else if (webUrl.startsWith("git@bitbucket.org:")) {
-                  webUrl = webUrl.replace(
-                    "git@bitbucket.org:",
-                    "https://bitbucket.org/",
-                  );
-                } else if (webUrl.startsWith("https://github.com/")) {
-                  // già ok
-                } else if (webUrl.startsWith("https://bitbucket.org/")) {
-                  // già ok
-                }
-                // Rimuovi .git finale se presente
-                if (webUrl.endsWith(".git")) {
-                  webUrl = webUrl.slice(0, -4);
-                }
-                a.href = webUrl;
-                a.textContent = remote.Name + ": " + webUrl;
-                a.target = "_blank";
-                li.appendChild(a);
-                ul.appendChild(li);
-              });
-              ul.dataset.loaded = "1";
+        showTab("info");
+        const ul = document.getElementById("remotes-list");
+        if (ul.dataset.loaded) return;
+        fetch("/remotes")
+          .then((r) => r.json())
+          .then((remotes) => {
+            ul.innerHTML = "";
+            remotes.forEach((remote) => {
+              const li = document.createElement("li");
+              const a = document.createElement("a");
+              let webUrl = remote.URL;
+              if (webUrl.startsWith("git@github.com:")) {
+                webUrl = webUrl.replace("git@github.com:", "https://github.com/");
+              } else if (webUrl.startsWith("git@bitbucket.org:")) {
+                webUrl = webUrl.replace("git@bitbucket.org:", "https://bitbucket.org/");
+              }
+              if (webUrl.endsWith(".git")) {
+                webUrl = webUrl.slice(0, -4);
+              }
+              a.href = webUrl;
+              a.textContent = remote.Name + ": " + webUrl;
+              a.target = "_blank";
+              li.appendChild(a);
+              ul.appendChild(li);
             });
-        }
+            ul.dataset.loaded = "1";
+          });
       };
 
       function checkout(branch) {
@@ -119,20 +152,14 @@
           body: JSON.stringify({ branch }),
         })
           .then((r) => {
-            if (!r.ok) {
-              return r.text().then((t) => {
-                throw new Error(t);
-              });
-            }
+            if (!r.ok) return r.text().then((t) => { throw new Error(t); });
             return r.json();
           })
           .then((data) => {
-            document.getElementById("message").textContent =
-              "Switched to: " + data.branch;
+            document.getElementById("message").textContent = "Switched to: " + data.branch;
           })
           .catch((err) => {
-            document.getElementById("message").textContent =
-              "Error: " + err.message;
+            document.getElementById("message").textContent = "Error: " + err.message;
           });
       }
 
@@ -142,13 +169,12 @@
           const container = document.getElementById("branches");
           branches.forEach((b) => {
             const btn = document.createElement("button");
-            btn.textContent = `switch to... ${b}`;
+            btn.textContent = "switch to... " + b;
             btn.onclick = () => checkout(b);
             container.appendChild(btn);
           });
         });
 
-      // Carica la versione build
       fetch("/version")
         .then((r) => r.text())
         .then((ver) => {
