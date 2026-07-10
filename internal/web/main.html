@@ -101,9 +101,44 @@
         overflow-y: auto;
         flex: 1;
       }
+      #flash {
+        position: fixed;
+        top: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #c0392b;
+        color: #fff;
+        padding: 0.6rem 1.2rem 0.6rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9em;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        max-width: 80%;
+      }
+      #flash.hidden { display: none !important; }
+      #flash-close {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1.1em;
+        cursor: pointer;
+        margin: 0;
+        padding: 0;
+        line-height: 1;
+        display: inline;
+        text-transform: none;
+      }
     </style>
   </head>
   <body>
+    <div id="flash" class="hidden">
+      <span id="flash-text"></span>
+      <button id="flash-close" onclick="hideFlash()">&#x2715;</button>
+    </div>
+
     <aside id="sidebar">
       <h2>Repositories</h2>
       <div id="repo-list"></div>
@@ -141,6 +176,20 @@
     </div>
 
     <script>
+      let flashTimer = null;
+
+      function flash(msg) {
+        const el = document.getElementById("flash");
+        document.getElementById("flash-text").textContent = msg;
+        el.classList.remove("hidden");
+        clearTimeout(flashTimer);
+        flashTimer = setTimeout(hideFlash, 5000);
+      }
+
+      function hideFlash() {
+        document.getElementById("flash").classList.add("hidden");
+      }
+
       const TABS = ["branches", "prs", "info"];
 
       function showTab(name) {
@@ -180,7 +229,8 @@
             container.dataset.loaded = "1";
           })
           .catch((err) => {
-            container.textContent = "Error: " + err.message;
+a            container.innerHTML = '<p style="color:#c0392b;font-size:0.9em;">' + err.message + '</p>';
+            flash(err.message);
           });
       };
 
@@ -299,16 +349,16 @@
             return r.json();
           })
           .then(() => {
-            // reset loaded flags so all tabs reload for the new repo
             document.getElementById("prs").dataset.loaded = "";
             document.getElementById("remotes-list").dataset.loaded = "";
             document.getElementById("branches").innerHTML = "";
             document.getElementById("message").textContent = "";
             loadSidebar();
             reloadBranches();
+            showTab("branches");
           })
           .catch((err) => {
-            document.getElementById("message").textContent = "Switch failed: " + err.message;
+            flash(err.message);
           });
       }
 
