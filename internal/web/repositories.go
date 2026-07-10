@@ -9,8 +9,7 @@ import (
 )
 
 func repoRegistryPath() string {
-	home, _ := os.UserHomeDir()
-	return home + "/.sensorario-qwe/repositories"
+	return qweDir() + "/repositories"
 }
 
 func gitRoot() (string, error) {

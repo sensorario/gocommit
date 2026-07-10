@@ -229,7 +229,7 @@
             container.dataset.loaded = "1";
           })
           .catch((err) => {
-a            container.innerHTML = '<p style="color:#c0392b;font-size:0.9em;">' + err.message + '</p>';
+            container.innerHTML = '<p style="color:#c0392b;font-size:0.9em;">' + err.message + '</p>';
             flash(err.message);
           });
       };
