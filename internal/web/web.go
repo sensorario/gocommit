@@ -91,6 +91,7 @@ func pidByPort(port string) (int, error) {
 }
 
 func Serve() {
+	RegisterCurrentRepo()
 	RegisterRoutes()
 	srv := &http.Server{Addr: ":8080"}
 	go func() {

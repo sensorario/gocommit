@@ -10,5 +10,8 @@ func RegisterRoutes() {
 	http.HandleFunc("/info", InfoController)
 	http.HandleFunc("/version", VersionController)
 	http.HandleFunc("/shutdown", ShutdownController)
+	http.HandleFunc("/repositories", RepositoriesController)
+	http.HandleFunc("/current-repo", CurrentRepoController)
+	http.HandleFunc("/switch-repo", SwitchRepoController)
 	http.HandleFunc("/", MainPageController)
 }
