@@ -1,7 +1,7 @@
 CMD_NAME = qwe
 INSTALL_PATH = /usr/local/bin/$(CMD_NAME)
 
-.PHONY: all bumpversion tidy build prepare-embed-version install dev clean
+.PHONY: all bumpversion tidy build prepare-embed-version install dev clean test
 
 all: bumpversion tidy install
 
@@ -35,6 +35,10 @@ install: build
 dev: prepare-embed-version
 	@echo "🚀 Running in dev mode (HTML served from disk)..."
 	DEV_MODE=1 go run -ldflags "-X main.Version=$$(cat VERSION)" . web
+
+test:
+	@echo "🧪 Running tests..."
+	go test ./...
 
 clean:
 	@echo "🧹 Cleaning up..."

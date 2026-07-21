@@ -11,6 +11,14 @@ import (
 
 const customFeatureOption = "Custom..."
 
+var CommitTypes = []string{
+	"chore",
+	"fix",
+	"test",
+	"feat",
+	"refactor",
+}
+
 func selectFeatureName(ticket string) string {
 	recent := commit.RecentFeatureNames(5)
 	items := make([]string, 0, len(recent)+1)
@@ -52,7 +60,7 @@ func Run() {
 
 	prompt := promptui.Select{
 		Label: "Commit type",
-		Items: []string{"feat", "fix", "chore", "refactor"},
+		Items: CommitTypes,
 	}
 	_, commitType, err := prompt.Run()
 	if err != nil {
