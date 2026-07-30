@@ -9,6 +9,7 @@ func RegisterRoutes() {
 	http.HandleFunc("/pull-requests", PullRequestsController)
 	http.HandleFunc("/info", InfoController)
 	http.HandleFunc("/modified-files", ModifiedFilesController)
+	http.HandleFunc("/diff", DiffController)
 	http.HandleFunc("/version", VersionController)
 	http.HandleFunc("/shutdown", ShutdownController)
 	http.HandleFunc("/repositories", RepositoriesController)

@@ -96,6 +96,21 @@ func ModifiedFilesController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(files)
 }
 
+func DiffController(w http.ResponseWriter, r *http.Request) {
+	file := r.URL.Query().Get("file")
+	if file == "" {
+		http.Error(w, "missing file param", http.StatusBadRequest)
+		return
+	}
+	diff, err := commit.GetFileDiff(file)
+	if err != nil {
+		http.Error(w, "failed to get diff", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(diff))
+}
+
 func MainPageController(w http.ResponseWriter, r *http.Request) {
 	       w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	       var html []byte

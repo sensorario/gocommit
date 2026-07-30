@@ -101,6 +101,64 @@
         overflow-y: auto;
         flex: 1;
       }
+      #tab-content-status {
+        flex: 1;
+        display: none;
+        flex-direction: row;
+        gap: 0;
+        overflow: hidden;
+      }
+      #status-file-list {
+        width: 240px;
+        min-width: 180px;
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+        padding: 0.5rem 0;
+      }
+      .status-file-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        border-radius: 0;
+        padding: 0.35rem 0.75rem;
+        cursor: pointer;
+        font-family: monospace;
+        font-size: 0.82em;
+        color: #333;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+      }
+      .status-file-item:hover { background: #f0f0f0; }
+      .status-file-item.selected { background: #333; color: #fff; }
+      .status-prefix-M  { color: #e67e22; }
+      .status-prefix-A  { color: #27ae60; }
+      .status-prefix-D  { color: #c0392b; }
+      .status-prefix-Q  { color: #7f8c8d; }
+      .status-file-item.selected .status-prefix-M,
+      .status-file-item.selected .status-prefix-A,
+      .status-file-item.selected .status-prefix-D,
+      .status-file-item.selected .status-prefix-Q { color: #ccc; }
+      #status-diff {
+        flex: 1;
+        overflow: auto;
+        padding: 0.75rem 1rem;
+        background: #fafafa;
+      }
+      #status-diff pre {
+        margin: 0;
+        font-family: monospace;
+        font-size: 0.82em;
+        white-space: pre;
+        line-height: 1.5;
+      }
+      .diff-add  { color: #27ae60; }
+      .diff-del  { color: #c0392b; }
+      .diff-hunk { color: #2980b9; }
+      .diff-meta { color: #888; }
       #flash {
         position: fixed;
         top: 1rem;
@@ -158,8 +216,9 @@
         <div id="branches"></div>
       </div>
 
-      <div id="tab-content-status" class="tab-content" style="display: none">
-        <div id="status-files"></div>
+      <div id="tab-content-status">
+        <div id="status-file-list"></div>
+        <div id="status-diff"><pre style="color:#aaa;font-family:monospace;font-size:0.85em;">Select a file to see its diff.</pre></div>
       </div>
 
       <div id="tab-content-prs" class="tab-content" style="display: none">
@@ -197,37 +256,82 @@
 
       const TABS = ["branches", "prs", "status", "info"];
 
+      const TAB_DISPLAY = { status: "flex" };
+
       function showTab(name) {
         TABS.forEach((t) => {
           document.getElementById("tab-" + t).classList.remove("active");
           document.getElementById("tab-content-" + t).style.display = "none";
         });
         document.getElementById("tab-" + name).classList.add("active");
-        document.getElementById("tab-content-" + name).style.display = "";
+        document.getElementById("tab-content-" + name).style.display = TAB_DISPLAY[name] || "";
       }
 
       document.getElementById("tab-branches").onclick = () => showTab("branches");
 
+      function loadDiff(filepath, btn) {
+        document.querySelectorAll(".status-file-item").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        const diffPanel = document.getElementById("status-diff");
+        diffPanel.innerHTML = "<pre style='color:#aaa;font-size:0.85em;font-family:monospace;'>Loading diff...</pre>";
+        fetch("/diff?file=" + encodeURIComponent(filepath))
+          .then((r) => { if (!r.ok) return r.text().then((t) => { throw new Error(t); }); return r.text(); })
+          .then((text) => {
+            const pre = document.createElement("pre");
+            if (!text.trim()) {
+              pre.textContent = "(no diff available)";
+              pre.style.color = "#aaa";
+            } else {
+              text.split("\n").forEach((line) => {
+                const span = document.createElement("span");
+                span.textContent = line + "\n";
+                if (line.startsWith("+") && !line.startsWith("+++")) span.className = "diff-add";
+                else if (line.startsWith("-") && !line.startsWith("---")) span.className = "diff-del";
+                else if (line.startsWith("@@")) span.className = "diff-hunk";
+                else if (line.startsWith("diff ") || line.startsWith("index ") || line.startsWith("--- ") || line.startsWith("+++ ")) span.className = "diff-meta";
+                pre.appendChild(span);
+              });
+            }
+            diffPanel.innerHTML = "";
+            diffPanel.appendChild(pre);
+          })
+          .catch((err) => {
+            diffPanel.innerHTML = '<pre style="color:#c0392b;">' + err.message + '</pre>';
+          });
+      }
+
       document.getElementById("tab-status").onclick = function () {
         showTab("status");
-        const container = document.getElementById("status-files");
-        container.textContent = "Loading...";
+        const list = document.getElementById("status-file-list");
+        list.innerHTML = "";
+        document.getElementById("status-diff").innerHTML = "<pre style='color:#aaa;font-size:0.85em;font-family:monospace;'>Select a file to see its diff.</pre>";
         fetch("/modified-files")
           .then((r) => r.json())
           .then((files) => {
-            container.innerHTML = "";
             if (!files || files.length === 0) {
-              container.textContent = "Nothing to commit.";
+              list.innerHTML = '<p style="padding:0.5rem;color:#888;font-size:0.85em;">Nothing to commit.</p>';
               return;
             }
-            const pre = document.createElement("pre");
-            pre.style.fontFamily = "monospace";
-            pre.style.fontSize = "0.9em";
-            pre.textContent = files.join("\n");
-            container.appendChild(pre);
+            files.forEach((line) => {
+              const prefix = line.substring(0, 2);
+              const filepath = line.substring(3);
+              const btn = document.createElement("button");
+              btn.className = "status-file-item";
+              const prefixSpan = document.createElement("span");
+              prefixSpan.textContent = prefix + " ";
+              const p = prefix.trim();
+              if (p === "M" || p === "MM") prefixSpan.className = "status-prefix-M";
+              else if (p === "A") prefixSpan.className = "status-prefix-A";
+              else if (p === "D") prefixSpan.className = "status-prefix-D";
+              else prefixSpan.className = "status-prefix-Q";
+              btn.appendChild(prefixSpan);
+              btn.appendChild(document.createTextNode(filepath));
+              btn.onclick = () => loadDiff(filepath, btn);
+              list.appendChild(btn);
+            });
           })
           .catch((err) => {
-            container.innerHTML = '<p style="color:#c0392b;">' + err.message + '</p>';
+            list.innerHTML = '<p style="color:#c0392b;">' + err.message + '</p>';
           });
       };
 

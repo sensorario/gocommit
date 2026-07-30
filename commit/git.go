@@ -136,6 +136,21 @@ func RecentFeatureNames(n int) []string {
 	return names
 }
 
+// GetFileDiff returns the diff for a single file vs HEAD.
+// For untracked files (status "??") it shows the full content as an addition.
+func GetFileDiff(file string) (string, error) {
+	out, err := exec.Command("git", "diff", "HEAD", "--", file).Output()
+	if err == nil && len(strings.TrimSpace(string(out))) > 0 {
+		return string(out), nil
+	}
+	// Fallback for new untracked files
+	out, err = exec.Command("git", "diff", "--no-index", "/dev/null", file).Output()
+	if err != nil && len(out) == 0 {
+		return "", err
+	}
+	return string(out), nil
+}
+
 func RunGitAdd() error {
 	cmd := exec.Command("git", "add", ".")
 	cmd.Stdout = nil
