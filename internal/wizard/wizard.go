@@ -43,6 +43,21 @@ func Run() {
 		os.Exit(1)
 	}
 
+	files, err := commit.GetUncommittedFiles()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting git status: %v\n", err)
+		os.Exit(1)
+	}
+	if len(files) == 0 {
+		fmt.Println("Nothing to commit.")
+		os.Exit(0)
+	}
+	fmt.Println("Files to be committed:")
+	for _, f := range files {
+		fmt.Println(" ", f)
+	}
+	fmt.Println()
+
 	if err := commit.RunGitAdd(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error during git add: %v\n", err)
 		os.Exit(1)

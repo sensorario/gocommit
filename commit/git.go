@@ -61,6 +61,22 @@ func ListBranches() ([]string, error) {
 	return branches, nil
 }
 
+// GetUncommittedFiles returns the list of uncommitted files in porcelain format
+func GetUncommittedFiles() ([]string, error) {
+	cmd := exec.Command("git", "status", "--porcelain")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, line := range strings.Split(string(output), "\n") {
+		if strings.TrimSpace(line) != "" {
+			files = append(files, line)
+		}
+	}
+	return files, nil
+}
+
 // IsWorkingDirectoryDirty returns true if there are uncommitted changes
 func IsWorkingDirectoryDirty() (bool, error) {
 	cmd := exec.Command("git", "status", "--porcelain")

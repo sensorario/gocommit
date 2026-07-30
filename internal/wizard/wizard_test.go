@@ -3,7 +3,7 @@ package wizard
 import "testing"
 
 func TestCommitTypes_ContainsExpectedValues(t *testing.T) {
-	expected := []string{"feat", "fix", "chore", "refactor"}
+	expected := []string{"chore", "fix", "test", "feat", "refactor"}
 	if len(CommitTypes) != len(expected) {
 		t.Fatalf("len(CommitTypes) = %d, want %d", len(CommitTypes), len(expected))
 	}

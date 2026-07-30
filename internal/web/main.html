@@ -150,11 +150,16 @@
       <div class="navbar">
         <button id="tab-branches" class="tab active">Branches</button>
         <button id="tab-prs" class="tab">Pull Requests</button>
+        <button id="tab-status" class="tab">Status</button>
         <button id="tab-info" class="tab">Info</button>
       </div>
 
       <div id="tab-content-branches" class="tab-content">
         <div id="branches"></div>
+      </div>
+
+      <div id="tab-content-status" class="tab-content" style="display: none">
+        <div id="status-files"></div>
       </div>
 
       <div id="tab-content-prs" class="tab-content" style="display: none">
@@ -190,7 +195,7 @@
         document.getElementById("flash").classList.add("hidden");
       }
 
-      const TABS = ["branches", "prs", "info"];
+      const TABS = ["branches", "prs", "status", "info"];
 
       function showTab(name) {
         TABS.forEach((t) => {
@@ -202,6 +207,29 @@
       }
 
       document.getElementById("tab-branches").onclick = () => showTab("branches");
+
+      document.getElementById("tab-status").onclick = function () {
+        showTab("status");
+        const container = document.getElementById("status-files");
+        container.textContent = "Loading...";
+        fetch("/modified-files")
+          .then((r) => r.json())
+          .then((files) => {
+            container.innerHTML = "";
+            if (!files || files.length === 0) {
+              container.textContent = "Nothing to commit.";
+              return;
+            }
+            const pre = document.createElement("pre");
+            pre.style.fontFamily = "monospace";
+            pre.style.fontSize = "0.9em";
+            pre.textContent = files.join("\n");
+            container.appendChild(pre);
+          })
+          .catch((err) => {
+            container.innerHTML = '<p style="color:#c0392b;">' + err.message + '</p>';
+          });
+      };
 
       document.getElementById("tab-prs").onclick = function () {
         showTab("prs");

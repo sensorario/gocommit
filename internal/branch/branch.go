@@ -3,11 +3,29 @@ package branch
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 
 	"gocommit/commit"
 )
+
+func printUncommittedFiles(files []string) {
+	const width = 42
+	title := " Uncommitted files "
+	top := "┌─" + title + strings.Repeat("─", width-len(title)-2) + "┐"
+	bottom := "└" + strings.Repeat("─", width) + "┘"
+	fmt.Println(top)
+	for _, f := range files {
+		line := "│  " + f
+		padding := width - len([]rune(f)) - 3
+		if padding < 0 {
+			padding = 0
+		}
+		fmt.Println(line + strings.Repeat(" ", padding) + "│")
+	}
+	fmt.Println(bottom)
+}
 
 func Run() {
 	branches, err := commit.ListLocalBranches()
@@ -18,6 +36,9 @@ func Run() {
 	if len(branches) == 0 {
 		fmt.Fprintf(os.Stderr, "No local branches found.\n")
 		os.Exit(1)
+	}
+	if files, err := commit.GetUncommittedFiles(); err == nil && len(files) > 0 {
+		printUncommittedFiles(files)
 	}
 	prompt := promptui.Select{
 		Label: "Select branch",

@@ -86,6 +86,16 @@ func ShutdownController(w http.ResponseWriter, r *http.Request) {
 	shutdownCh <- struct{}{}
 }
 
+func ModifiedFilesController(w http.ResponseWriter, r *http.Request) {
+	files, err := commit.GetUncommittedFiles()
+	if err != nil {
+		http.Error(w, "failed to get git status", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(files)
+}
+
 func MainPageController(w http.ResponseWriter, r *http.Request) {
 	       w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	       var html []byte
