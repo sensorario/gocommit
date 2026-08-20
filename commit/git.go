@@ -187,3 +187,19 @@ func RunGitPushSetUpstream(branch string) error {
 	cmd.Stderr = nil
 	return cmd.Run()
 }
+
+// RunGitMerge merges the given branch into the current branch with --no-ff.
+func RunGitMerge(branch string) error {
+	cmd := exec.Command("git", "merge", "--no-ff", branch)
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}
+
+// DeleteLocalBranch deletes a local branch that has been fully merged.
+func DeleteLocalBranch(branch string) error {
+	cmd := exec.Command("git", "branch", "-d", branch)
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}

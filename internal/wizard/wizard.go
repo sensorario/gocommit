@@ -36,6 +36,38 @@ func selectFeatureName(ticket string) string {
 	return chosen
 }
 
+const defaultBranch = "next"
+
+func mergeIntoNext(branchName string) {
+	fmt.Println("Running: git checkout " + defaultBranch)
+	if err := commit.CheckoutBranch(defaultBranch); err != nil {
+		fmt.Fprintf(os.Stderr, "Error during git checkout %s: %v\n", defaultBranch, err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Running: git merge --no-ff " + branchName)
+	if err := commit.RunGitMerge(branchName); err != nil {
+		fmt.Fprintf(os.Stderr, "Error during git merge: %v\n", err)
+		os.Exit(1)
+	}
+	commit.PrintGreen("Branch '" + branchName + "' mergiato su " + defaultBranch + ".")
+
+	sel := promptui.Select{
+		Label: "Cancellare il branch '" + branchName + "' ora mergiato?",
+		Items: []string{"Si", "No"},
+	}
+	_, choice, err := sel.Run()
+	if err != nil || choice == "No" {
+		return
+	}
+
+	if err := commit.DeleteLocalBranch(branchName); err != nil {
+		fmt.Fprintf(os.Stderr, "Error during git branch -d: %v\n", err)
+		os.Exit(1)
+	}
+	commit.PrintGreen("Branch '" + branchName + "' cancellato.")
+}
+
 func Run() {
 	configPath := "gocommit.conf.json"
 	if err := commit.EnsureConfig(configPath); err != nil {
@@ -124,14 +156,20 @@ func Run() {
 
 		if !hasUpstream {
 			sel := promptui.Select{
-				Label: "Il branch non ha un upstream remoto. Impostare 'origin/" + branchName + "' come upstream?",
-				Items: []string{"Si", "No"},
+				Label: "Il branch non ha un upstream remoto. Cosa vuoi fare?",
+				Items: []string{"Push (imposta upstream)", "Merge su next"},
 			}
 			_, choice, err := sel.Run()
-			if err != nil || choice == "No" {
+			if err != nil {
 				fmt.Println("Push saltato.")
 				return
 			}
+
+			if choice == "Merge su next" {
+				mergeIntoNext(branchName)
+				return
+			}
+
 			fmt.Println("Running: git push --set-upstream origin " + branchName)
 			if err := commit.RunGitPushSetUpstream(branchName); err != nil {
 				fmt.Fprintf(os.Stderr, "Error during git push --set-upstream: %v\n", err)
