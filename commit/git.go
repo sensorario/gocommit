@@ -203,3 +203,23 @@ func DeleteLocalBranch(branch string) error {
 	cmd.Stderr = nil
 	return cmd.Run()
 }
+
+// RemoteBranchExists reports whether the given branch exists on origin.
+func RemoteBranchExists(branch string) (bool, error) {
+	cmd := exec.Command("git", "ls-remote", "--exit-code", "--heads", "origin", branch)
+	if err := cmd.Run(); err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// DeleteRemoteBranch deletes the given branch on origin.
+func DeleteRemoteBranch(branch string) error {
+	cmd := exec.Command("git", "push", "origin", "--delete", branch)
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}

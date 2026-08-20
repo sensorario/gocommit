@@ -53,7 +53,7 @@ func mergeIntoNext(branchName string) {
 	commit.PrintGreen("Branch '" + branchName + "' mergiato su " + defaultBranch + ".")
 
 	sel := promptui.Select{
-		Label: "Cancellare il branch '" + branchName + "' ora mergiato?",
+		Label: "Cancellare il branch '" + branchName + "' ora mergiato (locale ed eventuale remoto)?",
 		Items: []string{"Si", "No"},
 	}
 	_, choice, err := sel.Run()
@@ -65,7 +65,20 @@ func mergeIntoNext(branchName string) {
 		fmt.Fprintf(os.Stderr, "Error during git branch -d: %v\n", err)
 		os.Exit(1)
 	}
-	commit.PrintGreen("Branch '" + branchName + "' cancellato.")
+	commit.PrintGreen("Branch locale '" + branchName + "' cancellato.")
+
+	remoteExists, err := commit.RemoteBranchExists(branchName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error checking remote branch: %v\n", err)
+		os.Exit(1)
+	}
+	if remoteExists {
+		if err := commit.DeleteRemoteBranch(branchName); err != nil {
+			fmt.Fprintf(os.Stderr, "Error during git push origin --delete: %v\n", err)
+			os.Exit(1)
+		}
+		commit.PrintGreen("Branch remoto '" + branchName + "' cancellato.")
+	}
 }
 
 func Run() {
@@ -82,6 +95,18 @@ func Run() {
 	}
 	if len(files) == 0 {
 		fmt.Println("Nothing to commit.")
+
+		branchName, err := commit.CurrentBranch()
+		if err == nil && branchName != defaultBranch {
+			sel := promptui.Select{
+				Label: "Nessuna modifica. Mergiare '" + branchName + "' su " + defaultBranch + " e cancellare il branch?",
+				Items: []string{"Si", "No"},
+			}
+			_, choice, err := sel.Run()
+			if err == nil && choice == "Si" {
+				mergeIntoNext(branchName)
+			}
+		}
 		os.Exit(0)
 	}
 	fmt.Println("Files to be committed:")
