@@ -36,9 +36,33 @@ func selectFeatureName(ticket string) string {
 	return chosen
 }
 
-const defaultBranch = "next"
+// resolveDefaultBranch returns "next" if it exists locally; otherwise it asks
+// the user to pick the main branch from the list of local branches.
+func resolveDefaultBranch() string {
+	branches, err := commit.ListLocalBranches()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error listing branches: %v\n", err)
+		os.Exit(1)
+	}
+	for _, b := range branches {
+		if b == "next" {
+			return "next"
+		}
+	}
 
-func mergeIntoNext(branchName string) {
+	sel := promptui.Select{
+		Label: "Nessun branch 'next' trovato. Seleziona il branch principale",
+		Items: branches,
+	}
+	_, chosen, err := sel.Run()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Prompt failed: %v\n", err)
+		os.Exit(1)
+	}
+	return chosen
+}
+
+func mergeIntoNext(branchName, defaultBranch string) {
 	fmt.Println("Running: git checkout " + defaultBranch)
 	if err := commit.CheckoutBranch(defaultBranch); err != nil {
 		fmt.Fprintf(os.Stderr, "Error during git checkout %s: %v\n", defaultBranch, err)
@@ -88,6 +112,8 @@ func Run() {
 		os.Exit(1)
 	}
 
+	defaultBranch := resolveDefaultBranch()
+
 	files, err := commit.GetUncommittedFiles()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting git status: %v\n", err)
@@ -104,7 +130,7 @@ func Run() {
 			}
 			_, choice, err := sel.Run()
 			if err == nil && choice == "Si" {
-				mergeIntoNext(branchName)
+				mergeIntoNext(branchName, defaultBranch)
 			}
 		}
 		os.Exit(0)
@@ -180,9 +206,10 @@ func Run() {
 		}
 
 		if !hasUpstream {
+			mergeChoice := "Merge su " + defaultBranch
 			sel := promptui.Select{
 				Label: "Il branch non ha un upstream remoto. Cosa vuoi fare?",
-				Items: []string{"Push (imposta upstream)", "Merge su next"},
+				Items: []string{"Push (imposta upstream)", mergeChoice},
 			}
 			_, choice, err := sel.Run()
 			if err != nil {
@@ -190,8 +217,8 @@ func Run() {
 				return
 			}
 
-			if choice == "Merge su next" {
-				mergeIntoNext(branchName)
+			if choice == mergeChoice {
+				mergeIntoNext(branchName, defaultBranch)
 				return
 			}
 
