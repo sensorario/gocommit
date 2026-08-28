@@ -29,7 +29,15 @@
         margin: 0;
         padding: 1rem 1rem 0.5rem;
       }
-      #repo-list {
+      .sidebar-group {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .sidebar-group.grow { flex: 1; }
+      .sidebar-group + .sidebar-group { border-top: 1px solid #ddd; }
+      #repo-list,
+      #tools-list {
         flex: 1;
         overflow-y: auto;
         padding: 0 0.5rem 0.5rem;
@@ -56,6 +64,32 @@
         color: #fff;
         font-weight: bold;
       }
+      .branch-item.current {
+        font-weight: bold;
+        border: 1px solid #333;
+        cursor: default;
+      }
+      .branch-item.current::after {
+        content: " (current)";
+        font-weight: normal;
+        text-transform: none;
+      }
+      .sg-icon {
+        display: inline-block;
+        vertical-align: middle;
+        flex-shrink: 0;
+      }
+      .tech-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .tech-badge.tech-node { color: #3c873a; }
+      .tech-badge.tech-go { color: #00acd7; }
+      .tech-badge.tech-php { color: #777bb4; }
+      .tech-badge.tech- { color: #bbb; }
+      .managed-icon.managed-true { color: #27ae60; }
+      .managed-icon.managed-false { color: #c0392b; }
       #main {
         flex: 1;
         display: flex;
@@ -198,8 +232,16 @@
     </div>
 
     <aside id="sidebar">
-      <h2>Repositories</h2>
-      <div id="repo-list"></div>
+      <div class="sidebar-group grow">
+        <h2>Repositories</h2>
+        <div id="repo-list"></div>
+      </div>
+      <div class="sidebar-group">
+        <h2>Tools</h2>
+        <div id="tools-list">
+          <button id="nav-versions" class="repo-item">Versions</button>
+        </div>
+      </div>
     </aside>
 
     <div id="main">
@@ -232,6 +274,20 @@
         </div>
       </div>
 
+      <div id="versions-view" style="display: none; flex: 1; overflow-y: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 0.4rem; border-bottom: 1px solid #ddd;">Repository</th>
+              <th style="text-align: left; padding: 0.4rem; border-bottom: 1px solid #ddd;">Tech</th>
+              <th style="text-align: left; padding: 0.4rem; border-bottom: 1px solid #ddd;">Version</th>
+              <th style="text-align: left; padding: 0.4rem; border-bottom: 1px solid #ddd;">Managed</th>
+            </tr>
+          </thead>
+          <tbody id="versions-tbody"></tbody>
+        </table>
+      </div>
+
       <div id="message"></div>
       <footer style="margin-top: 2em; color: #888; font-size: 0.9em; display: flex; align-items: center; gap: 1.5em;">
         <span>Version: <span id="build-version">...</span></span>
@@ -259,6 +315,7 @@
       const TAB_DISPLAY = { status: "flex" };
 
       function showTab(name) {
+        hideVersions();
         TABS.forEach((t) => {
           document.getElementById("tab-" + t).classList.remove("active");
           document.getElementById("tab-content-" + t).style.display = "none";
@@ -268,6 +325,94 @@
       }
 
       document.getElementById("tab-branches").onclick = () => showTab("branches");
+
+      function hideVersions() {
+        document.getElementById("nav-versions").classList.remove("active");
+        document.getElementById("versions-view").style.display = "none";
+        document.querySelector(".navbar").style.display = "flex";
+      }
+
+      function showVersions() {
+        TABS.forEach((t) => {
+          document.getElementById("tab-" + t).classList.remove("active");
+          document.getElementById("tab-content-" + t).style.display = "none";
+        });
+        document.querySelector(".navbar").style.display = "none";
+        document.getElementById("nav-versions").classList.add("active");
+        document.getElementById("versions-view").style.display = "flex";
+        loadVersions();
+      }
+
+      const TECH_ICON_SVG = {
+        node: '<polygon points="12,3 19.8,7.5 19.8,16.5 12,21 4.2,16.5 4.2,7.5" />',
+        go: '<polygon points="12,3 21,12 12,21 3,12" />',
+        php:
+          '<path d="M9 4c-1.5 0-2.5 1-2.5 2.5v3c0 1-.5 1.5-1.5 2.5 1 1 1.5 1.5 1.5 2.5v3c0 1.5 1 2.5 2.5 2.5" />' +
+          '<path d="M15 4c1.5 0 2.5 1 2.5 2.5v3c0 1 .5 1.5 1.5 2.5-1 1-1.5 1.5-1.5 2.5v3c0 1.5-1 2.5-2.5 2.5" />',
+      };
+      const TECH_LABEL = { node: "Node", go: "Go", php: "PHP", "": "Unknown" };
+
+      function svgIcon(inner, size) {
+        size = size || 16;
+        return (
+          '<svg class="sg-icon" width="' + size + '" height="' + size +
+          '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + "</svg>"
+        );
+      }
+
+      function techBadge(tech) {
+        const label = TECH_LABEL[tech] || "Unknown";
+        const icon = TECH_ICON_SVG[tech];
+        return (
+          '<span class="tech-badge tech-' + tech + '" title="' + label + '">' +
+          (icon ? svgIcon(icon) : "") + "<span>" + label + "</span></span>"
+        );
+      }
+
+      function managedBadge(managed) {
+        const icon = managed
+          ? '<polyline points="4 12 9 17 20 6" />'
+          : '<line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />';
+        const label = managed ? "Versioned" : "Not versioned";
+        return '<span class="managed-icon managed-' + managed + '" title="' + label + '">' + svgIcon(icon) + "</span>";
+      }
+
+      function loadVersions() {
+        const tbody = document.getElementById("versions-tbody");
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:0.4rem;color:#888;">Loading...</td></tr>';
+        fetch("/repo-versions")
+          .then((r) => r.json())
+          .then((repoVersions) => {
+            tbody.innerHTML = "";
+            (repoVersions || []).forEach((v) => {
+              const tr = document.createElement("tr");
+              const tdName = document.createElement("td");
+              tdName.textContent = basename(v.Path);
+              tdName.title = v.Path;
+              tdName.style.padding = "0.4rem";
+              const tdTech = document.createElement("td");
+              tdTech.style.padding = "0.4rem";
+              tdTech.innerHTML = techBadge(v.Tech);
+              const tdVersion = document.createElement("td");
+              tdVersion.textContent = v.Version || "n/a";
+              tdVersion.style.padding = "0.4rem";
+              const tdManaged = document.createElement("td");
+              tdManaged.style.padding = "0.4rem";
+              tdManaged.innerHTML = managedBadge(v.Managed);
+              tr.appendChild(tdName);
+              tr.appendChild(tdTech);
+              tr.appendChild(tdVersion);
+              tr.appendChild(tdManaged);
+              tbody.appendChild(tr);
+            });
+          })
+          .catch((err) => {
+            tbody.innerHTML = '<tr><td colspan="4" style="padding:0.4rem;color:#c0392b;">' + err.message + "</td></tr>";
+          });
+      }
+
+      document.getElementById("nav-versions").onclick = () => showVersions();
 
       function loadDiff(filepath, btn) {
         document.querySelectorAll(".status-file-item").forEach((b) => b.classList.remove("selected"));
@@ -408,23 +553,34 @@
           })
           .then((data) => {
             document.getElementById("message").textContent = "Switched to: " + data.branch;
+            reloadBranches();
           })
           .catch((err) => {
             document.getElementById("message").textContent = "Error: " + err.message;
           });
       }
 
-      fetch("/branches")
-        .then((r) => r.json())
-        .then((branches) => {
-          const container = document.getElementById("branches");
-          branches.forEach((b) => {
-            const btn = document.createElement("button");
-            btn.textContent = "switch to... " + b;
+      function renderBranches(branches, current) {
+        const container = document.getElementById("branches");
+        container.innerHTML = "";
+        branches.forEach((b) => {
+          const btn = document.createElement("button");
+          const isCurrent = b === current;
+          btn.className = "branch-item" + (isCurrent ? " current" : "");
+          btn.textContent = isCurrent ? b : "switch to... " + b;
+          if (isCurrent) {
+            btn.disabled = true;
+          } else {
             btn.onclick = () => checkout(b);
-            container.appendChild(btn);
-          });
+          }
+          container.appendChild(btn);
         });
+      }
+
+      Promise.all([
+        fetch("/branches").then((r) => r.json()),
+        fetch("/current-branch").then((r) => r.json()),
+      ]).then(([branches, current]) => renderBranches(branches, current));
 
       fetch("/version")
         .then((r) => r.text())
@@ -495,18 +651,10 @@
       }
 
       function reloadBranches() {
-        fetch("/branches")
-          .then((r) => r.json())
-          .then((branches) => {
-            const container = document.getElementById("branches");
-            container.innerHTML = "";
-            branches.forEach((b) => {
-              const btn = document.createElement("button");
-              btn.textContent = "switch to... " + b;
-              btn.onclick = () => checkout(b);
-              container.appendChild(btn);
-            });
-          });
+        Promise.all([
+          fetch("/branches").then((r) => r.json()),
+          fetch("/current-branch").then((r) => r.json()),
+        ]).then(([branches, current]) => renderBranches(branches, current));
       }
 
       loadSidebar();

@@ -40,15 +40,25 @@ func Run() {
 	if files, err := commit.GetUncommittedFiles(); err == nil && len(files) > 0 {
 		printUncommittedFiles(files)
 	}
+	current, _ := commit.CurrentBranch()
+	items := make([]string, len(branches))
+	for i, b := range branches {
+		if b == current {
+			items[i] = b + "  (current)"
+		} else {
+			items[i] = b
+		}
+	}
 	prompt := promptui.Select{
 		Label: "Select branch",
-		Items: branches,
+		Items: items,
 	}
-	_, selectedBranch, err := prompt.Run()
+	idx, _, err := prompt.Run()
 	if err != nil {
 		fmt.Printf("Prompt failed: %v\n", err)
 		os.Exit(1)
 	}
+	selectedBranch := branches[idx]
 	   if err := commit.CheckoutBranch(selectedBranch); err != nil {
 		   fmt.Fprintf(os.Stderr, "Error switching branch: %v\n", err)
 		   if _, ok := err.(*commit.CheckoutError); ok {

@@ -42,6 +42,16 @@ func BranchesController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(branches)
 }
 
+func CurrentBranchController(w http.ResponseWriter, r *http.Request) {
+	branch, err := commit.CurrentBranch()
+	if err != nil {
+		http.Error(w, "failed to get current branch", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(branch)
+}
+
 func InfoController(w http.ResponseWriter, r *http.Request) {
 	info, err := commit.GetRepoInfo()
 	if err != nil {
