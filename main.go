@@ -7,6 +7,7 @@ import (
 	"gocommit/commit"
 	"gocommit/internal/branch"
 	"gocommit/internal/check"
+	"gocommit/internal/versions"
 	"gocommit/internal/web"
 	"gocommit/internal/wizard"
 )
@@ -40,6 +41,7 @@ func main() {
 			fmt.Printf("  %-20s %s\n", "check", "Verify gocommit.conf.json exists and all variables are present; adds missing ones with defaults")
 			fmt.Printf("  %-20s %s\n", "web", "Start a local web server in the background and open it in the browser")
 			fmt.Printf("  %-20s %s\n", "web-stop", "Stop the background web server")
+			fmt.Printf("  %-20s %s\n", "versions", "Show the package.json version of every known repository")
 			fmt.Printf("  %-20s %s\n", "help, -h, --help", "Show this help message")
 			fmt.Printf("  %-20s %s\n", "-v, --version", "Print the current version")
 			return
@@ -49,6 +51,7 @@ func main() {
 			"check":    check.Run,
 			"web":      web.Run,
 			"web-stop": web.Kill,
+			"versions": versions.Run,
 		}
 		if fn, ok := commands[arg]; ok {
 			fn()

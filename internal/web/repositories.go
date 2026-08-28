@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -38,6 +40,54 @@ func saveRepos(repos []string) {
 	os.WriteFile(repoRegistryPath(), []byte(strings.Join(repos, "\n")+"\n"), 0600)
 }
 
+// KnownRepos returns the registry of repositories gocommit knows about.
+func KnownRepos() []string {
+	return loadRepos()
+}
+
+// DiscoverSiblingRepos returns known repos plus any git repositories found
+// alongside them: for each known repo's parent directory, every subdirectory
+// containing a .git is included. This picks up e.g. all repos under a shared
+// "sg" workspace folder once any one of them is known.
+func DiscoverSiblingRepos(known []string) []string {
+	seen := make(map[string]bool, len(known))
+	repos := make([]string, 0, len(known))
+	for _, r := range known {
+		if !seen[r] {
+			seen[r] = true
+			repos = append(repos, r)
+		}
+	}
+	visitedDirs := make(map[string]bool)
+	for _, r := range known {
+		dir := filepath.Dir(r)
+		if visitedDirs[dir] {
+			continue
+		}
+		visitedDirs[dir] = true
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if !e.IsDir() {
+				continue
+			}
+			candidate := filepath.Join(dir, e.Name())
+			if seen[candidate] {
+				continue
+			}
+			if _, err := os.Stat(filepath.Join(candidate, ".git")); err != nil {
+				continue
+			}
+			seen[candidate] = true
+			repos = append(repos, candidate)
+		}
+	}
+	sort.Strings(repos)
+	return repos
+}
+
 func RegisterCurrentRepo() {
 	root, err := gitRoot()
 	if err != nil {
@@ -54,7 +104,7 @@ func RegisterCurrentRepo() {
 }
 
 func RepositoriesController(w http.ResponseWriter, r *http.Request) {
-	repos := loadRepos()
+	repos := DiscoverSiblingRepos(loadRepos())
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(repos)
 }
