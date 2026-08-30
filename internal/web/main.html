@@ -75,6 +75,21 @@
         font-weight: normal;
         text-transform: none;
       }
+      .branch-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .branch-row .branch-item {
+        flex: 1;
+      }
+      .branch-merge {
+        background: none;
+        border: 1px solid #333;
+        font-size: 0.75em;
+        padding: 0.3rem 0.6rem;
+        margin: 0.25rem 0;
+      }
       .sg-icon {
         display: inline-block;
         vertical-align: middle;
@@ -561,10 +576,32 @@
           });
       }
 
+      function mergeIntoNext(branch) {
+        fetch("/merge-into-next", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ branch }),
+        })
+          .then((r) => {
+            if (!r.ok) return r.text().then((t) => { throw new Error(t); });
+            return r.json();
+          })
+          .then(() => {
+            document.getElementById("message").textContent = "Merged " + branch + " into next";
+            reloadBranches();
+          })
+          .catch((err) => {
+            document.getElementById("message").textContent = "Error: " + err.message;
+          });
+      }
+
       function renderBranches(branches, current) {
         const container = document.getElementById("branches");
         container.innerHTML = "";
         branches.forEach((b) => {
+          const row = document.createElement("div");
+          row.className = "branch-row";
+
           const btn = document.createElement("button");
           const isCurrent = b === current;
           btn.className = "branch-item" + (isCurrent ? " current" : "");
@@ -574,7 +611,17 @@
           } else {
             btn.onclick = () => checkout(b);
           }
-          container.appendChild(btn);
+          row.appendChild(btn);
+
+          if (b !== "next") {
+            const mergeBtn = document.createElement("button");
+            mergeBtn.className = "branch-merge";
+            mergeBtn.textContent = "Merge into next";
+            mergeBtn.onclick = () => mergeIntoNext(b);
+            row.appendChild(mergeBtn);
+          }
+
+          container.appendChild(row);
         });
       }
 
