@@ -90,6 +90,14 @@
         padding: 0.3rem 0.6rem;
         margin: 0.25rem 0;
       }
+      .branch-delete {
+        background: none;
+        border: 1px solid #c0392b;
+        color: #c0392b;
+        font-size: 0.75em;
+        padding: 0.3rem 0.6rem;
+        margin: 0.25rem 0;
+      }
       .sg-icon {
         display: inline-block;
         vertical-align: middle;
@@ -595,7 +603,26 @@
           });
       }
 
-      function renderBranches(branches, current) {
+      function deleteBranch(branch) {
+        fetch("/delete-branch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ branch }),
+        })
+          .then((r) => {
+            if (!r.ok) return r.text().then((t) => { throw new Error(t); });
+            return r.json();
+          })
+          .then(() => {
+            document.getElementById("message").textContent = "Deleted " + branch;
+            reloadBranches();
+          })
+          .catch((err) => {
+            document.getElementById("message").textContent = "Error: " + err.message;
+          });
+      }
+
+      function renderBranches(branches, current, merged) {
         const container = document.getElementById("branches");
         container.innerHTML = "";
         branches.forEach((b) => {
@@ -621,6 +648,14 @@
             row.appendChild(mergeBtn);
           }
 
+          if (b !== "next" && !isCurrent && (merged || []).includes(b)) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "branch-delete";
+            deleteBtn.textContent = "Delete";
+            deleteBtn.onclick = () => deleteBranch(b);
+            row.appendChild(deleteBtn);
+          }
+
           container.appendChild(row);
         });
       }
@@ -628,7 +663,8 @@
       Promise.all([
         fetch("/branches").then((r) => r.json()),
         fetch("/current-branch").then((r) => r.json()),
-      ]).then(([branches, current]) => renderBranches(branches, current));
+        fetch("/merged-branches").then((r) => r.json()),
+      ]).then(([branches, current, merged]) => renderBranches(branches, current, merged));
 
       fetch("/version")
         .then((r) => r.text())
@@ -702,7 +738,8 @@
         Promise.all([
           fetch("/branches").then((r) => r.json()),
           fetch("/current-branch").then((r) => r.json()),
-        ]).then(([branches, current]) => renderBranches(branches, current));
+          fetch("/merged-branches").then((r) => r.json()),
+        ]).then(([branches, current, merged]) => renderBranches(branches, current, merged));
       }
 
       document.getElementById("repo-list").addEventListener("keydown", (e) => {

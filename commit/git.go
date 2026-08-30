@@ -28,6 +28,24 @@ func ListLocalBranches() ([]string, error) {
 	return branches, nil
 }
 
+// MergedLocalBranches returns local branches already merged into the given branch.
+func MergedLocalBranches(into string) ([]string, error) {
+	cmd := exec.Command("git", "branch", "--format=%(refname:short)", "--merged", into)
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(output), "\n")
+	var branches []string
+	for _, line := range lines {
+		branch := strings.TrimSpace(line)
+		if branch != "" && branch != into {
+			branches = append(branches, branch)
+		}
+	}
+	return branches, nil
+}
+
 func CurrentBranch() (string, error) {
 	branchNameBytes, err := exec.Command("git", "branch", "--show-current").Output()
 	if err != nil {

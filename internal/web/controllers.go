@@ -118,6 +118,44 @@ func MergeIntoNextController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"branch": "next", "merged": body.Branch})
 }
 
+func MergedBranchesController(w http.ResponseWriter, r *http.Request) {
+	branches, err := commit.MergedLocalBranches("next")
+	if err != nil {
+		http.Error(w, "failed to list merged branches", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(branches)
+}
+
+func DeleteBranchController(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var body struct {
+		Branch string `json:"branch"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Branch == "" {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if body.Branch == "next" {
+		http.Error(w, "cannot delete next", http.StatusBadRequest)
+		return
+	}
+	if err := commit.DeleteLocalBranch(body.Branch); err != nil {
+		http.Error(w, "delete failed: "+err.Error(), http.StatusConflict)
+		return
+	}
+	remoteExists, err := commit.RemoteBranchExists(body.Branch)
+	if err == nil && remoteExists {
+		commit.DeleteRemoteBranch(body.Branch)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"deleted": body.Branch})
+}
+
 func ShutdownController(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
