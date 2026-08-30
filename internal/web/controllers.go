@@ -86,6 +86,38 @@ func CheckoutController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"branch": body.Branch})
 }
 
+func MergeIntoNextController(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var body struct {
+		Branch string `json:"branch"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Branch == "" {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if body.Branch == "next" {
+		http.Error(w, "cannot merge next into itself", http.StatusBadRequest)
+		return
+	}
+	if err := commit.CheckoutBranch("next"); err != nil {
+		status := http.StatusInternalServerError
+		if _, ok := err.(*commit.CheckoutError); ok {
+			status = http.StatusConflict
+		}
+		http.Error(w, "checkout failed: "+err.Error(), status)
+		return
+	}
+	if err := commit.RunGitMerge(body.Branch); err != nil {
+		http.Error(w, "merge failed: "+err.Error(), http.StatusConflict)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"branch": "next", "merged": body.Branch})
+}
+
 func ShutdownController(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

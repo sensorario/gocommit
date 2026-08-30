@@ -6,6 +6,7 @@ func RegisterRoutes() {
 	http.HandleFunc("/branches", BranchesController)
 	http.HandleFunc("/current-branch", CurrentBranchController)
 	http.HandleFunc("/checkout", CheckoutController)
+	http.HandleFunc("/merge-into-next", MergeIntoNextController)
 	http.HandleFunc("/remotes", RemotesController)
 	http.HandleFunc("/pull-requests", PullRequestsController)
 	http.HandleFunc("/info", InfoController)
