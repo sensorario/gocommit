@@ -13,8 +13,9 @@
         overflow: hidden;
       }
       #sidebar {
-        width: 220px;
+        width: fit-content;
         min-width: 220px;
+        max-width: 420px;
         background: #f4f4f4;
         border-right: 1px solid #ddd;
         display: flex;
@@ -656,6 +657,23 @@
           fetch("/current-branch").then((r) => r.json()),
         ]).then(([branches, current]) => renderBranches(branches, current));
       }
+
+      document.getElementById("repo-list").addEventListener("keydown", (e) => {
+        const down = e.key === "ArrowDown" || e.key === "j" || (e.key === "Tab" && !e.shiftKey);
+        const up = e.key === "ArrowUp" || e.key === "k" || (e.key === "Tab" && e.shiftKey);
+        if (!down && !up) return;
+        const items = Array.from(document.querySelectorAll("#repo-list .repo-item"));
+        if (items.length === 0) return;
+        const idx = items.indexOf(document.activeElement);
+        e.preventDefault();
+        if (idx === -1) {
+          items[0].focus();
+          return;
+        }
+        const nextIdx = down ? idx + 1 : idx - 1;
+        if (nextIdx < 0 || nextIdx >= items.length) return;
+        items[nextIdx].focus();
+      });
 
       loadSidebar();
     </script>
