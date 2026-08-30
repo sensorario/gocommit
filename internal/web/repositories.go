@@ -53,10 +53,14 @@ func DiscoverSiblingRepos(known []string) []string {
 	seen := make(map[string]bool, len(known))
 	repos := make([]string, 0, len(known))
 	for _, r := range known {
-		if !seen[r] {
-			seen[r] = true
-			repos = append(repos, r)
+		if seen[r] {
+			continue
 		}
+		if _, err := os.Stat(filepath.Join(r, ".git")); err != nil {
+			continue
+		}
+		seen[r] = true
+		repos = append(repos, r)
 	}
 	visitedDirs := make(map[string]bool)
 	for _, r := range known {
