@@ -36,29 +36,55 @@ func selectFeatureName(ticket string) string {
 	return chosen
 }
 
-// resolveDefaultBranch returns "next" if it exists locally; otherwise it asks
-// the user to pick the main branch from the list of local branches.
-func resolveDefaultBranch() string {
+// resolveDefaultBranch returns the main branch. It reads the stored value from
+// config first; if absent it falls back to "next" (if it exists) or asks the
+// user once, then persists the choice for future runs.
+func resolveDefaultBranch(configPath string) string {
 	branches, err := commit.ListLocalBranches()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error listing branches: %v\n", err)
 		os.Exit(1)
 	}
-	for _, b := range branches {
-		if b == "next" {
-			return "next"
+
+	cfg, err := commit.LoadConfig(configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+		os.Exit(1)
+	}
+
+	if cfg.MainBranch != "" {
+		for _, b := range branches {
+			if b == cfg.MainBranch {
+				return cfg.MainBranch
+			}
 		}
 	}
 
-	sel := promptui.Select{
-		Label: "Nessun branch 'next' trovato. Seleziona il branch principale",
-		Items: branches,
+	chosen := ""
+	for _, b := range branches {
+		if b == "next" {
+			chosen = "next"
+			break
+		}
 	}
-	_, chosen, err := sel.Run()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Prompt failed: %v\n", err)
-		os.Exit(1)
+
+	if chosen == "" {
+		sel := promptui.Select{
+			Label: "Nessun branch principale configurato. Seleziona il branch principale",
+			Items: branches,
+		}
+		_, chosen, err = sel.Run()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Prompt failed: %v\n", err)
+			os.Exit(1)
+		}
 	}
+
+	cfg.MainBranch = chosen
+	if err := commit.SaveConfig(configPath, cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: impossibile salvare il branch principale in config: %v\n", err)
+	}
+
 	return chosen
 }
 
@@ -112,7 +138,7 @@ func Run() {
 		os.Exit(1)
 	}
 
-	defaultBranch := resolveDefaultBranch()
+	defaultBranch := resolveDefaultBranch(configPath)
 
 	files, err := commit.GetUncommittedFiles()
 	if err != nil {
