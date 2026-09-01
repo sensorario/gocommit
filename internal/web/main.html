@@ -664,7 +664,11 @@
         fetch("/branches").then((r) => r.json()),
         fetch("/current-branch").then((r) => r.json()),
         fetch("/merged-branches").then((r) => r.json()),
-      ]).then(([branches, current, merged]) => renderBranches(branches, current, merged));
+      ]).then(([branches, current, merged]) => renderBranches(branches, current, merged))
+        .catch(() => Promise.all([
+          fetch("/branches").then((r) => r.json()),
+          fetch("/current-branch").then((r) => r.json()),
+        ]).then(([branches, current]) => renderBranches(branches, current, [])));
 
       fetch("/version")
         .then((r) => r.text())
@@ -693,7 +697,7 @@
       function loadSidebar() {
         Promise.all([
           fetch("/repositories").then((r) => r.json()),
-          fetch("/current-repo").then((r) => r.json()),
+          fetch("/current-repo").then((r) => r.json()).catch(() => ""),
         ]).then(([repos, current]) => {
           currentRepo = current;
           const list = document.getElementById("repo-list");
@@ -706,7 +710,7 @@
             btn.onclick = () => switchRepo(path);
             list.appendChild(btn);
           });
-        });
+        }).catch(() => {});
       }
 
       function switchRepo(path) {
@@ -739,7 +743,11 @@
           fetch("/branches").then((r) => r.json()),
           fetch("/current-branch").then((r) => r.json()),
           fetch("/merged-branches").then((r) => r.json()),
-        ]).then(([branches, current, merged]) => renderBranches(branches, current, merged));
+        ]).then(([branches, current, merged]) => renderBranches(branches, current, merged))
+          .catch(() => Promise.all([
+            fetch("/branches").then((r) => r.json()),
+            fetch("/current-branch").then((r) => r.json()),
+          ]).then(([branches, current]) => renderBranches(branches, current, [])));
       }
 
       document.getElementById("repo-list").addEventListener("keydown", (e) => {

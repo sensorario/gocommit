@@ -114,11 +114,7 @@ func RepositoriesController(w http.ResponseWriter, r *http.Request) {
 }
 
 func CurrentRepoController(w http.ResponseWriter, r *http.Request) {
-	root, err := gitRoot()
-	if err != nil {
-		http.Error(w, "not a git repository", http.StatusInternalServerError)
-		return
-	}
+	root, _ := gitRoot()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(root)
 }
