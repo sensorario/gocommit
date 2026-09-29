@@ -249,17 +249,25 @@ func Run() {
 			}
 
 			fmt.Println("Running: git push --set-upstream origin " + branchName)
-			if err := commit.RunGitPushSetUpstream(branchName); err != nil {
+			prURL, err := commit.RunGitPushSetUpstream(branchName)
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error during git push --set-upstream: %v\n", err)
 				os.Exit(1)
+			}
+			if prURL != "" {
+				fmt.Println("Pull request:", prURL)
 			}
 			return
 		}
 
 		fmt.Println("Running: git push")
-		if err := commit.RunGitPush(); err != nil {
+		prURL, err := commit.RunGitPush()
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error during git push: %v\n", err)
 			os.Exit(1)
+		}
+		if prURL != "" {
+			fmt.Println("Pull request:", prURL)
 		}
 	}
 }

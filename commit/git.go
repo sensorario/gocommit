@@ -1,6 +1,7 @@
 package commit
 
 import (
+	"bytes"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -192,18 +193,28 @@ func BranchHasUpstream() (bool, error) {
 	return true, nil
 }
 
-func RunGitPush() error {
-	cmd := exec.Command("git", "push")
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	return cmd.Run()
+var prURLRe = regexp.MustCompile(`https://\S+`)
+
+func extractPRURL(output string) string {
+	return prURLRe.FindString(output)
 }
 
-func RunGitPushSetUpstream(branch string) error {
+func RunGitPush() (string, error) {
+	var stderr bytes.Buffer
+	cmd := exec.Command("git", "push")
+	cmd.Stdout = nil
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	return extractPRURL(stderr.String()), err
+}
+
+func RunGitPushSetUpstream(branch string) (string, error) {
+	var stderr bytes.Buffer
 	cmd := exec.Command("git", "push", "--set-upstream", "origin", branch)
 	cmd.Stdout = nil
-	cmd.Stderr = nil
-	return cmd.Run()
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	return extractPRURL(stderr.String()), err
 }
 
 // RunGitMerge merges the given branch into the current branch with --no-ff.
