@@ -120,11 +120,11 @@ func MergeIntoNextController(w http.ResponseWriter, r *http.Request) {
 
 func MergedBranchesController(w http.ResponseWriter, r *http.Request) {
 	branches, err := commit.MergedLocalBranches("next")
+	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		http.Error(w, "failed to list merged branches", http.StatusInternalServerError)
+		json.NewEncoder(w).Encode([]string{})
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(branches)
 }
 

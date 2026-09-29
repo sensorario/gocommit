@@ -9,6 +9,7 @@ type Config struct {
 	OnBeforeCommit  string `json:"onBeforeCommit"`
 	OnAfterCommit   string `json:"onAfterCommit"`
 	PushAfterCommit bool   `json:"pushAfterCommit"`
+	MainBranch      string `json:"mainBranch,omitempty"`
 }
 
 // configDefaults maps each JSON key to its default value.
@@ -106,6 +107,17 @@ func CheckConfig(path string) ([]string, error) {
 	}
 
 	return added, nil
+}
+
+func SaveConfig(path string, cfg *Config) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(cfg)
 }
 
 func LoadConfig(path string) (*Config, error) {
